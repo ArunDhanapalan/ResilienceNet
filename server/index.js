@@ -11,8 +11,7 @@ const PORT = process.env.PORT || 5000;
 // Allowed origins for CORS
 const allowedOrigins = [
   'http://localhost:5173',       // Local dev frontend
-  'https://civic-pulse.web.app', // Production Firebase
-  'https://civic-pulse.netlify.app' // Production Netlify
+  'https://civic-pulse-app.web.app', // Production Firebase
 ];
 
 app.use(cors({

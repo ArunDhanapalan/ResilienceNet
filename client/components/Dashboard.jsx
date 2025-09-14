@@ -1,68 +1,105 @@
-import React from 'react';
+// Dashboard.jsx
+import { useState, useEffect } from "react";
 import axios from "../utils/axiosConfig.js";
-import { toast } from 'react-hot-toast';
+import Report from "./Report";
+import { toast } from "react-hot-toast";
 
-const Dashboard = ({ issues = [], getIssues, setView }) => {
-  const updateStatus = async (id, status) => {
+const Dashboard = ({ user }) => {
+  const [issues, setIssues] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [view, setView] = useState("list"); // "list" or "report"
+
+  // Fetch all issues from backend
+  const getIssues = async () => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(
-        `http://localhost:5000/issues/${id}`,
-        { status },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success(`Issue marked as ${status}`);
-      getIssues();
+      setLoading(true);
+      const res = await axios.get("/issues");
+      setIssues(res.data);
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Failed to update status');
+      console.error("Error fetching issues:", err);
+      toast.error("Failed to fetch issues");
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    getIssues();
+  }, []);
+
+  // Update issue status
+  const updateStatus = async (id, status) => {
+    try {
+      await axios.put(`/issues/${id}`, { status });
+      toast.success("Status updated");
+      getIssues(); // refresh list
+    } catch (err) {
+      console.error("Error updating status:", err);
+      toast.error("Failed to update status");
+    }
+  };
+
+  const renderList = () => {
+    if (loading) return <div>Loading issues...</div>;
+    if (!issues.length) return <div>No issues reported yet.</div>;
+
+    return (
+      <div className="space-y-4">
+        {issues.map((issue) => (
+          <div
+            key={issue._id}
+            className="border rounded-lg p-4 shadow-md bg-white"
+          >
+            <h3 className="text-xl font-bold">{issue.title}</h3>
+            <p>{issue.description}</p>
+            <p className="text-sm text-gray-500">
+              Reporter: {issue.reporter?.email || "Unknown"}
+            </p>
+            <p className="text-sm text-gray-500">
+              Status: {issue.status}
+            </p>
+            {issue.image && (
+              <img
+                src={issue.image}
+                alt="issue"
+                className="w-full max-w-xs mt-2 rounded"
+              />
+            )}
+            {user && (
+              <div className="mt-2 space-x-2">
+                {["Reported", "In Progress", "Resolved"].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => updateStatus(issue._id, s)}
+                    className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
-    <div>
+    <div className="w-full">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Reported Issues</h2>
+        <h2 className="text-2xl font-bold">Dashboard</h2>
         <button
-          onClick={() => setView('report')}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          onClick={() => setView(view === "list" ? "report" : "list")}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
         >
-          + Report Issue
+          {view === "list" ? "Add Report" : "Back to Issues"}
         </button>
       </div>
 
-      {issues.length === 0 ? (
-        <p>No issues reported yet.</p>
+      {view === "list" ? (
+        renderList()
       ) : (
-        <ul className="space-y-4">
-          {issues.map((issue) => (
-            <li key={issue._id} className="p-4 border rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold">{issue.title}</h3>
-              <p>{issue.description}</p>
-              {issue.image && (
-                <img
-                  src={issue.image}
-                  alt={issue.title}
-                  className="w-full h-60 object-cover mt-2 rounded-md"
-                />
-              )}
-              <div className="mt-2 flex gap-2">
-                <button
-                  onClick={() => updateStatus(issue._id, 'In Progress')}
-                  className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                >
-                  In Progress
-                </button>
-                <button
-                  onClick={() => updateStatus(issue._id, 'Resolved')}
-                  className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-                >
-                  Resolved
-                </button>
-              </div>
-              <p className="mt-1 text-sm text-gray-500">Status: {issue.status}</p>
-            </li>
-          ))}
-        </ul>
+        <Report getIssues={getIssues} setView={setView} />
       )}
     </div>
   );
