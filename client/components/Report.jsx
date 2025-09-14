@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import axios from "../../server/utils/axiosConfig.js";
+import axios from "../utils/axiosConfig.js";
 
 const Report = ({ getIssues, setView }) => {
   const [title, setTitle] = useState("");

@@ -1,5 +1,5 @@
 import React from 'react';
-import axios from "../../server/utils/axiosConfig.js";
+import axios from "../utils/axiosConfig.js";
 import { toast } from 'react-hot-toast';
 
 const Dashboard = ({ issues = [], getIssues, setView }) => {
