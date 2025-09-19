@@ -34,12 +34,14 @@ const Login = ({ setUser }) => {
         payload
       );
 
+      console.log(res);
+
       const token = res.data.token;
       localStorage.setItem("token", token);
 
       // Hydrate user manually from response
       const userData = {
-        _id: res.data.user._id,
+        _id: res.data.user.id,
         email: res.data.user.email,
         username: res.data.user.username || username,
         role: res.data.user.role,
@@ -53,7 +55,8 @@ const Login = ({ setUser }) => {
       );
 
       // No need to navigate, the Dashboard component will handle the view based on user role
-      
+      toast.loading("Logging in...", {duration: 1200})
+      console.log(res);
     } catch (err) {
       console.error("Login/Register error:", err);
       // More specific error handling

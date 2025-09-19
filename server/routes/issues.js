@@ -61,7 +61,7 @@ router.get('/', async (req, res) => {
 // GET ALL ISSUES FOR GOVERNMENT (with more details)
 router.get('/all', authMiddleware, async (req, res) => {
     try {
-        if (req.user.role !== 'govt') {
+        if (req.data.user.role !== 'govt') {
             return res.status(403).json({ error: 'Access denied. Government role required.' });
         }
         const issues = await Issue.find().populate('reporter', 'email username');

@@ -49,9 +49,13 @@ const CommunityIssues = ({ issues, loading, user, onIssueClick }) => {
   };
 
   const openDialog = (issue) => {
-    setSelectedIssue(issue);
-    setDialogOpen(true);
-    setCurrentImageIndex(0);
+    if (onIssueClick) {
+      onIssueClick(issue._id);
+    } else {
+      setSelectedIssue(issue);
+      setDialogOpen(true);
+      setCurrentImageIndex(0);
+    }
   };
 
   const nextImage = (images) => {

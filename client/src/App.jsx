@@ -6,6 +6,8 @@ import Login from "../components/Login";
 import LoadingPage from "../components/LoadingPage";
 import Report from "../components/Report";
 import Nav from "../components/Nav";
+import MyIssues from "../components/MyIssues";
+import GovernmentDashboard from "../components/GovernmentDashboard";
 
 axios.defaults.withCredentials = true;
 
@@ -18,7 +20,7 @@ const App = () => {
 
   const getIssues = async (token) => {
     try {
-      const res = await axios.get("http://localhost:5000/issues", {
+      const res = await axios.get(`{import.meta.env.VITE_BACKEND_URL}/issues`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setIssues(res.data);
@@ -76,8 +78,12 @@ const App = () => {
     }
   }, [user]);
 
-  if (loading)
-    return <LoadingPage />;
+  if (loading) return <LoadingPage />;
+
+  <>
+    <MyIssues issues={issues} loading={loading} user={user} />
+    <GovernmentDashboard issues={issues} loading={loading} user={user} />
+  </>;
 
   const renderView = () => {
     if (!user)

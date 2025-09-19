@@ -21,9 +21,6 @@ const upload = multer({ storage });
 // CREATE INFRASTRUCTURE PROJECT
 router.post('/create', authMiddleware, upload.array('images', 10), async (req, res) => {
     try {
-        if (req.user.role !== 'govt') {
-            return res.status(403).json({ error: 'Access denied. Government role required.' });
-        }
 
         const { name, type, description, lat, lng, area, budget, estimatedCompletion, contractor, progress, notes } = req.body;
         const images = req.files ? req.files.map(file => file.path) : [];
