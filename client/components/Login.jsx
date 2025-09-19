@@ -37,11 +37,12 @@ const Login = ({ setUser }) => {
       const token = res.data.token;
       localStorage.setItem("token", token);
 
+      // Hydrate user manually from response
       const userData = {
-        _id: res.data.user?._id,
+        _id: res.data.user._id,
         email: res.data.user.email,
         username: res.data.user.username || username,
-        role: res.data.user.role || role,
+        role: res.data.user.role,
       };
 
       setUser(userData);
@@ -51,17 +52,23 @@ const Login = ({ setUser }) => {
         isLogin ? "Logged in successfully!" : "Registered successfully!"
       );
 
-      if (!isLogin) {
-        setIsLogin(true);
-        return;
+      // Check user role and navigate accordingly
+      if (userData.role === 'govt') {
+        navigate("/govt-dashboard");
+      } else {
+        navigate("/dashboard"); // Citizen dashboard
       }
-
-      navigate("/dashboard");
+      
     } catch (err) {
       console.error("Login/Register error:", err);
-      toast.error(
-        err.response?.data?.error || err.message || "Unexpected error"
-      );
+      // More specific error handling
+      if (err.response && err.response.status === 409) {
+        toast.error("An account with this email or username already exists.");
+      } else {
+        toast.error(
+          err.response?.data?.error || err.message || "Unexpected error"
+        );
+      }
     }
   };
 

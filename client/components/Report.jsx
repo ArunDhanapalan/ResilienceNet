@@ -1,6 +1,14 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import axios from "../utils/axiosConfig.js";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select.jsx";
 
 const chennaiCoords = { lat: 13.0827, lng: 80.2707 };
 
@@ -18,6 +26,7 @@ const Report = ({ getIssues, setView }) => {
   const [images, setImages] = useState([]);
   const [location, setLocation] = useState(chennaiCoords);
   const [area, setArea] = useState("");
+  const [category, setCategory] = useState("Other"); // New state for category
   const [loading, setLoading] = useState(false);
   const [areaLoading, setAreaLoading] = useState(false);
 
@@ -35,11 +44,9 @@ const Report = ({ getIssues, setView }) => {
         toast.success(`Area: ${res.data.address.suburb}`);
       } else {
         setArea("Unknown Area");
-        // toast.error("Area not found.");
       }
     } catch (err) {
       setArea("Unknown Area");
-      // toast.error("Failed to get area.");
     } finally {
       setAreaLoading(false);
     }
@@ -91,6 +98,7 @@ const Report = ({ getIssues, setView }) => {
     formData.append("lat", location.lat);
     formData.append("lng", location.lng);
     formData.append("area", area);
+    formData.append("category", category); // Append the new category
 
     images.forEach((img) => formData.append("images", img));
 
@@ -132,6 +140,20 @@ const Report = ({ getIssues, setView }) => {
         rows={4}
         className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 transition duration-200"
       />
+      {/* Category selection dropdown */}
+      <Select value={category} onValueChange={setCategory}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select a category" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="Roads">Roads</SelectItem>
+          <SelectItem value="Water">Water</SelectItem>
+          <SelectItem value="Electricity">Electricity</SelectItem>
+          <SelectItem value="Sanitation">Sanitation</SelectItem>
+          <SelectItem value="Public Property">Public Property</SelectItem>
+          <SelectItem value="Other">Other</SelectItem>
+        </SelectContent>
+      </Select>
       <input
         type="file"
         multiple

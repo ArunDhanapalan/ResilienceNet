@@ -1,3 +1,4 @@
+// client/components/MyIssues.jsx
 import { useEffect, useState } from "react";
 import {
   Card,
@@ -109,21 +110,15 @@ const MyIssues = ({ issues, loading, user, refreshFlag }) => {
                     </Badge>
                   </div>
                 </div>
-                {issue.images?.length > 0 ? (
-  <div className="h-20 w-20 flex-shrink-0">
-    <img
-      src={issue.images[0]}
-      alt="Issue"
-      className="h-full w-full object-cover rounded-md"
-    />
-  </div>
-) : (
-  <div className="h-20 w-20 flex-shrink-0 bg-gray-200 rounded-md flex items-center justify-center">
-    <span className="text-gray-400 text-sm">No Image</span>
-  </div>
-)}
-
-
+                {issue.images && issue.images.length > 0 && (
+                  <div className="h-20 w-20 flex-shrink-0">
+                    <img
+                      src={issue.images[0]}
+                      alt="Issue"
+                      className="h-full w-full object-cover rounded-md"
+                    />
+                  </div>
+                )}
               </div>
             </Card>
           ))}

@@ -1,3 +1,4 @@
+// client/components/CommunityIssues.jsx
 import { useEffect, useState } from "react";
 import {
   Card,
@@ -22,7 +23,6 @@ const CommunityIssues = ({ issues, loading, user }) => {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  console.log(issues);
 
   useEffect(() => {
     if (issues && user) {
@@ -104,7 +104,6 @@ const CommunityIssues = ({ issues, loading, user }) => {
                     </Badge>
                   </div>
                 </div>
-                {/* Changed this section to display the first image from the 'images' array */}
                 {issue.images && issue.images.length > 0 && (
                   <div className="h-20 w-20 flex-shrink-0">
                     <img
@@ -122,7 +121,6 @@ const CommunityIssues = ({ issues, loading, user }) => {
     );
   };
 
-  // Corrected and simplified the way images are handled for the dialog
   const imagesToDisplay = selectedIssue?.images || [];
 
   return (

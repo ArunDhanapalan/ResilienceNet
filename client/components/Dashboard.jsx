@@ -1,122 +1,97 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
+// client/components/Dashboard.jsx
+import React, { useState, useEffect } from "react";
+import axios from "../utils/axiosConfig.js";
 import { toast } from "react-hot-toast";
-
-// New Components for the 4-Quadrant Layout
-import MyIssues from "./MyIssues";
-import CommunityIssues from "./CommunityIssues";
-import IssuesMap from "./IssuesMap";
-import InfrastructureUpdates from "./InfrastructureUpdates";
-import Report from "./Report";
-
-// Shadcn UI Imports
-import { Button } from "../components/ui/button";
+import IssuesMap from "./IssuesMap.jsx";
+import CommunityIssues from "./CommunityIssues.jsx";
+import MyIssues from "./MyIssues.jsx";
+import Report from "./Report.jsx";
+import GovernmentDashboard from "./GovernmentDashboard.jsx";
+import Nav from "./Nav.jsx";
+// import Footer from "./Footer.jsx";
+import { Dialog, DialogContent } from "./ui/dialog.jsx";
 
 const Dashboard = ({ user }) => {
-  const [view, setView] = useState("dashboard"); // "dashboard" or "report"
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState("map");
+  const [showFullReport, setShowFullReport] = useState(null);
+  const [refreshFlag, setRefreshFlag] = useState(false);
 
   const getIssues = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/issues`);
+      const res = await axios.get("/issues");
       setIssues(res.data);
     } catch (err) {
-      console.error("Error fetching issues:", err);
-      toast.error("Failed to fetch issues");
+      toast.error("Failed to fetch issues.");
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
+  const getGovtIssues = async () => {
+    setLoading(true);
+    try {
+        const res = await axios.get("/issues/all");
+        setIssues(res.data);
+    } catch (err) {
+        toast.error("Failed to fetch government issues.");
+        console.error(err);
+    } finally {
+        setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    getIssues();
-  }, []);
+    if (user?.role === 'govt') {
+      getGovtIssues();
+    } else {
+      getIssues();
+    }
+  }, [user, refreshFlag]);
 
-  // ------------------------
-  // Citizen Dashboard
-  // ------------------------
-  const renderCitizenDashboard = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="md:col-span-1">
-        <MyIssues
-          issues={issues.filter((issue) => issue.reporter?._id === user?._id)}
-          loading={loading}
-          user={user}
-        />
-      </div>
-      <div className="md:col-span-1">
-        <CommunityIssues
-          issues={issues.filter((issue) => issue.reporter?._id !== user?._id)}
-          loading={loading}
-          user={user}
-        />
-      </div>
-      <div className="md:col-span-2">
-        <IssuesMap issues={issues} />
-      </div>
-      <div className="md:col-span-2">
-        <InfrastructureUpdates />
-      </div>
-    </div>
-  );
+  const renderView = () => {
+    switch (view) {
+      case "map":
+        return <IssuesMap issues={issues} />;
+      case "report":
+        return <Report getIssues={() => setRefreshFlag(prev => !prev)} setView={setView} />;
+      case "my_issues":
+        return <MyIssues issues={issues} loading={loading} user={user} />;
+      case "community":
+        return <CommunityIssues issues={issues} loading={loading} user={user} />;
+      default:
+        return <IssuesMap issues={issues} />;
+    }
+  };
 
-  // ------------------------
-  // Staff Dashboard
-  // ------------------------
-  const renderStaffDashboard = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="md:col-span-1">
-        <MyIssues
-          issues={issues.filter((issue) => issue.reporter?._id === user?._id)}
-          loading={loading}
-          user={user}
-        />
-      </div>
-      <div className="md:col-span-1">
-        <CommunityIssues
-          issues={issues.filter((issue) => issue.reporter?._id !== user?._id)}
-          loading={loading}
-          user={user}
-        />
-      </div>
-      <div className="md:col-span-2">
-        <IssuesMap issues={issues} />
-      </div>
-      <div className="md:col-span-2">
-        {/* Placeholder for Add Infrastructure Form */}
-        <div className="p-6 border rounded-lg shadow-md bg-white">
-          <h3 className="text-xl font-bold">
-            Add Infrastructure Update (Staff)
-          </h3>
-          <p className="text-sm text-gray-500 mt-2">
-            This section will be a form for staff to add new infrastructure
-            updates. I will generate this component in a future step.
-          </p>
+  // If the user is government, render the government dashboard
+  if (user?.role === 'govt') {
+    return (
+        <div className="h-screen w-full flex flex-col">
+          <Nav user={user} setView={setView} currentView={view} />
+            <div className="flex-1 overflow-auto p-4">
+                <GovernmentDashboard user={user} />
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
+  }
 
   return (
-    <div className="w-full p-4 md:p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-          Dashboard
-        </h2>
-        <Button
-          onClick={() => setView(view === "dashboard" ? "report" : "dashboard")}
-          className="min-w-[150px]"
-        >
-          {view === "dashboard" ? "Add Report" : "Back to Dashboard"}
-        </Button>
+    <div className="h-screen w-full flex flex-col">
+    <Nav user={user} setView={setView} currentView={view} />
+      <div className="flex-1 overflow-auto p-4">
+        {renderView()}
       </div>
-
-      {view === "dashboard" ? (
-        user?.role === "staff" ? renderStaffDashboard() : renderCitizenDashboard()
-      ) : (
-        <Report getIssues={getIssues} setView={setView} />
+      {showFullReport && (
+        <Dialog
+          open={!!showFullReport}
+          onOpenChange={() => setShowFullReport(null)}
+        >
+          <DialogContent>{/* Full report content goes here */}</DialogContent>
+        </Dialog>
       )}
     </div>
   );
