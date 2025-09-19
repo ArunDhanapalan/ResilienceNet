@@ -1,19 +1,26 @@
-// Dashboard.jsx
 import { useState, useEffect } from "react";
-import axios from "../utils/axiosConfig.js";
-import Report from "./Report";
+import axios from "axios";
 import { toast } from "react-hot-toast";
 
+// New Components for the 4-Quadrant Layout
+import MyIssues from "./MyIssues";
+import CommunityIssues from "./CommunityIssues";
+import IssuesMap from "./IssuesMap";
+import InfrastructureUpdates from "./InfrastructureUpdates";
+import Report from "./Report";
+
+// Shadcn UI Imports
+import { Button } from "../components/ui/button";
+
 const Dashboard = ({ user }) => {
+  const [view, setView] = useState("dashboard"); // "dashboard" or "report"
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState("list"); // "list" or "report"
 
-  // Fetch all issues from backend
   const getIssues = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("/issues");
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/issues`);
       setIssues(res.data);
     } catch (err) {
       console.error("Error fetching issues:", err);
@@ -27,77 +34,87 @@ const Dashboard = ({ user }) => {
     getIssues();
   }, []);
 
-  // Update issue status
-  const updateStatus = async (id, status) => {
-    try {
-      await axios.put(`/issues/${id}`, { status });
-      toast.success("Status updated");
-      getIssues(); // refresh list
-    } catch (err) {
-      console.error("Error updating status:", err);
-      toast.error("Failed to update status");
-    }
-  };
-
-  const renderList = () => {
-    if (loading) return <div>Loading issues...</div>;
-    if (!issues.length) return <div>No issues reported yet.</div>;
-
-    return (
-      <div className="space-y-4">
-        {issues.map((issue) => (
-          <div
-            key={issue._id}
-            className="border rounded-lg p-4 shadow-md bg-white"
-          >
-            <h3 className="text-xl font-bold">{issue.title}</h3>
-            <p>{issue.description}</p>
-            <p className="text-sm text-gray-500">
-              Reporter: {issue.reporter?.email || "Unknown"}
-            </p>
-            <p className="text-sm text-gray-500">
-              Status: {issue.status}
-            </p>
-            {issue.image && (
-              <img
-                src={issue.image}
-                alt="issue"
-                className="w-full max-w-xs mt-2 rounded"
-              />
-            )}
-            {user && (
-              <div className="mt-2 space-x-2">
-                {["Reported", "In Progress", "Resolved"].map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => updateStatus(issue._id, s)}
-                    className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+  // ------------------------
+  // Citizen Dashboard
+  // ------------------------
+  const renderCitizenDashboard = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="md:col-span-1">
+        <MyIssues
+          issues={issues.filter((issue) => issue.reporter?._id === user?._id)}
+          loading={loading}
+          user={user}
+        />
       </div>
-    );
-  };
+      <div className="md:col-span-1">
+        <CommunityIssues
+          issues={issues.filter((issue) => issue.reporter?._id !== user?._id)}
+          loading={loading}
+          user={user}
+        />
+      </div>
+      <div className="md:col-span-2">
+        <IssuesMap issues={issues} />
+      </div>
+      <div className="md:col-span-2">
+        <InfrastructureUpdates />
+      </div>
+    </div>
+  );
+
+  // ------------------------
+  // Staff Dashboard
+  // ------------------------
+  const renderStaffDashboard = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="md:col-span-1">
+        <MyIssues
+          issues={issues.filter((issue) => issue.reporter?._id === user?._id)}
+          loading={loading}
+          user={user}
+        />
+      </div>
+      <div className="md:col-span-1">
+        <CommunityIssues
+          issues={issues.filter((issue) => issue.reporter?._id !== user?._id)}
+          loading={loading}
+          user={user}
+        />
+      </div>
+      <div className="md:col-span-2">
+        <IssuesMap issues={issues} />
+      </div>
+      <div className="md:col-span-2">
+        {/* Placeholder for Add Infrastructure Form */}
+        <div className="p-6 border rounded-lg shadow-md bg-white">
+          <h3 className="text-xl font-bold">
+            Add Infrastructure Update (Staff)
+          </h3>
+          <p className="text-sm text-gray-500 mt-2">
+            This section will be a form for staff to add new infrastructure
+            updates. I will generate this component in a future step.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="w-full">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Dashboard</h2>
-        <button
-          onClick={() => setView(view === "list" ? "report" : "list")}
-          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+    <div className="w-full p-4 md:p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+          Dashboard
+        </h2>
+        <Button
+          onClick={() => setView(view === "dashboard" ? "report" : "dashboard")}
+          className="min-w-[150px]"
         >
-          {view === "list" ? "Add Report" : "Back to Issues"}
-        </button>
+          {view === "dashboard" ? "Add Report" : "Back to Dashboard"}
+        </Button>
       </div>
 
-      {view === "list" ? (
-        renderList()
+      {view === "dashboard" ? (
+        user?.role === "staff" ? renderStaffDashboard() : renderCitizenDashboard()
       ) : (
         <Report getIssues={getIssues} setView={setView} />
       )}

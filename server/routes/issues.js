@@ -12,26 +12,28 @@ const storage = new CloudinaryStorage({
     cloudinary,
     params: {
         folder: 'civicpulse',
-        allowed_formats: ['jpeg', 'png', 'jpg'] // lowercase!
+        allowed_formats: ['jpeg', 'png', 'jpg']
     }
 });
 
 const upload = multer({ storage });
 
-// CREATE ISSUE (protected route)
-router.post('/create', authMiddleware, upload.single('image'), async (req, res) => {
+router.post('/create', authMiddleware, upload.array('images', 10), async (req, res) => {
     try {
         const { title, description, lat, lng } = req.body;
 
-        if (!title || !description || !lat || !lng || !req.file) {
-            return res.status(400).json({ error: 'Missing required fields: title, description, lat, lng, or image.' });
+        // req.files will be an array of files
+        const images = req.files.map(file => file.path); 
+
+        if (!title || !description || !lat || !lng || !images || images.length === 0) {
+            return res.status(400).json({ error: 'Missing required fields: title, description, lat, lng, or images.' });
         }
 
         const issue = new Issue({
             title,
             description,
             location: { lat: parseFloat(lat), lng: parseFloat(lng) },
-            image: req.file.path,
+            images: images, // Use a new field for the array of images
             reporter: req.user.id
         });
 

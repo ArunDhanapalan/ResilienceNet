@@ -1,36 +1,84 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import axios from "../utils/axiosConfig.js";
+
+const chennaiCoords = { lat: 13.0827, lng: 80.2707 };
+
+const isWithinChennai = (lat, lng) => {
+  const minLat = 12.9;
+  const maxLat = 13.25;
+  const minLng = 80.0;
+  const maxLng = 80.45;
+  return lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng;
+};
 
 const Report = ({ getIssues, setView }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [image, setImage] = useState(null);
-  const [location, setLocation] = useState({ lat: 0, lng: 0 });
+  const [images, setImages] = useState([]);
+  const [location, setLocation] = useState(chennaiCoords);
+  const [area, setArea] = useState("");
   const [loading, setLoading] = useState(false);
+  const [areaLoading, setAreaLoading] = useState(false);
+
+  const getAreaFromCoords = async (lat, lng) => {
+    setAreaLoading(true);
+    try {
+      const res = await axios.get(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
+      );
+      if (res.data?.address?.city) {
+        setArea(res.data.address.city);
+        toast.success(`Area: ${res.data.address.city}`);
+      } else if (res.data?.address?.suburb) {
+        setArea(res.data.address.suburb);
+        toast.success(`Area: ${res.data.address.suburb}`);
+      } else {
+        setArea("Unknown Area");
+        // toast.error("Area not found.");
+      }
+    } catch (err) {
+      setArea("Unknown Area");
+      // toast.error("Failed to get area.");
+    } finally {
+      setAreaLoading(false);
+    }
+  };
 
   const getLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-          toast.success("Location obtained");
+          const { latitude, longitude } = pos.coords;
+          if (isWithinChennai(latitude, longitude)) {
+            setLocation({ lat: latitude, lng: longitude });
+            toast.success("Location obtained!");
+          } else {
+            setLocation(chennaiCoords);
+            toast.error("Location is outside Chennai. Using default.");
+          }
         },
-        () => {
-          toast.error("Could not get location. Using default.");
-          setLocation({ lat: 34.0522, lng: -118.2437 });
-        }
+        (err) => {
+          console.error("Geolocation error:", err);
+          toast.error("Location access denied or timed out. Using default.");
+          setLocation(chennaiCoords);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
       toast.error("Geolocation not supported. Using default.");
-      setLocation({ lat: 34.0522, lng: -118.2437 });
+      setLocation(chennaiCoords);
     }
   };
 
-  
+  useEffect(() => {
+    getAreaFromCoords(location.lat, location.lng);
+  }, [location]);
 
   const handleImageChange = (e) => {
-    if (e.target.files[0]) setImage(e.target.files[0]);
+    if (e.target.files) {
+      setImages(Array.from(e.target.files));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -42,7 +90,9 @@ const Report = ({ getIssues, setView }) => {
     formData.append("description", description);
     formData.append("lat", location.lat);
     formData.append("lng", location.lng);
-    if (image) formData.append("image", image);
+    formData.append("area", area);
+
+    images.forEach((img) => formData.append("images", img));
 
     try {
       await axios.post("/issues/create", formData, {
@@ -84,6 +134,7 @@ const Report = ({ getIssues, setView }) => {
       />
       <input
         type="file"
+        multiple
         onChange={handleImageChange}
         className="w-full text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
       />
@@ -96,6 +147,9 @@ const Report = ({ getIssues, setView }) => {
       </button>
       <div className="text-center text-sm text-gray-600">
         Location: Lat: {location.lat.toFixed(4)}, Lng: {location.lng.toFixed(4)}
+        <p className="mt-1 text-xs text-gray-400">
+          Area: {areaLoading ? "Looking up area..." : area}
+        </p>
       </div>
       <button
         type="submit"

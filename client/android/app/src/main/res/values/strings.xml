@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CivicPulse/ResilienceNet</string>
+    <string name="title_activity_main">CivicPulse/ResilienceNet</string>
+    <string name="package_name">com.spice.resiliencenet</string>
+    <string name="custom_url_scheme">com.spice.resiliencenet</string>
+</resources>

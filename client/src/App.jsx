@@ -1,73 +1,125 @@
-import { useState, useEffect } from 'react';
-import { toast } from 'react-hot-toast';
-import axios from 'axios';
-import Dashboard from '../components/Dashboard';
-import Login from '../components/Login';
-import Report from '../components/Report';
-import Nav from '../components/Nav';
+import { useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
+import axios from "axios";
+import Dashboard from "../components/Dashboard";
+import Login from "../components/Login";
+import Report from "../components/Report";
+import Nav from "../components/Nav";
 
 axios.defaults.withCredentials = true;
 
 const App = () => {
   const [user, setUser] = useState(null);
   const [issues, setIssues] = useState([]);
-  const [view, setView] = useState('dashboard');
+  const [view, setView] = useState("dashboard");
   const [loading, setLoading] = useState(true);
+  const [refreshFlag, setRefreshFlag] = useState(false);
 
-  const getIssues = async () => {
+  const getIssues = async (token) => {
     try {
-      const res = await axios.get('http://localhost:5000/issues');
+      const res = await axios.get("http://localhost:5000/issues", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setIssues(res.data);
     } catch (err) {
-      toast.error('Failed to fetch issues');
+      toast.error("Failed to fetch issues");
     }
   };
 
-  const checkUser = async () => {
+  const checkUser = async (token) => {
+    if (!token) return setLoading(false);
     try {
-      const res = await axios.get('http://localhost:5000/auth/current', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (res.data.user) setUser(res.data.user);
+      const res = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/auth/current`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (res.data.user) {
+        setUser(res.data.user);
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        await getIssues(token);
+      } else {
+        setUser(null);
+      }
     } catch {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
       setUser(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = async () => {
-    localStorage.removeItem('token');
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setUser(null);
-    toast.success('Logged out');
-    setView('login');
+    setIssues([]);
+    toast.success("Logged out");
+    setView("login");
   };
 
+  // ✅ Fetch user on app load
   useEffect(() => {
-    checkUser();
-    getIssues();
+    const token = localStorage.getItem("token");
+    checkUser(token);
   }, []);
 
-  if (loading) return <div className="text-center text-lg font-semibold">Loading...</div>;
+  // ✅ Refetch issues automatically whenever user logs in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (user && token) {
+      getIssues(token);
+    }
+  }, [user]);
+
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-screen text-lg font-semibold">
+        Loading...
+      </div>
+    );
 
   const renderView = () => {
-    if (!user) return <Login setUser={setUser} />;
+    if (!user)
+      return <Login setUser={setUser} setRefreshFlag={setRefreshFlag} />;
     switch (view) {
-      case 'dashboard':
-        return <Dashboard issues={issues} getIssues={getIssues} setView={setView} />;
-      case 'report':
-        return <Report getIssues={getIssues} setView={setView} />;
+      case "dashboard":
+        return (
+          <Dashboard
+            key={refreshFlag} // optional: forces remount if needed
+            issues={issues}
+            getIssues={() => getIssues(localStorage.getItem("token"))}
+            setView={setView}
+            user={user}
+          />
+        );
+      case "report":
+        return (
+          <Report
+            getIssues={() => getIssues(localStorage.getItem("token"))}
+            setView={setView}
+            user={user}
+          />
+        );
       default:
-        return <Dashboard issues={issues} getIssues={getIssues} setView={setView} />;
+        return (
+          <Dashboard
+            issues={issues}
+            getIssues={() => getIssues(localStorage.getItem("token"))}
+            setView={setView}
+            user={user}
+          />
+        );
     }
   };
 
   return (
-    <div className="flex flex-col items-center w-full min-h-screen p-4">
+    <div className="flex flex-col w-full h-screen bg-gray-50 dark:bg-gray-900">
       {user && <Nav user={user} logout={logout} setView={setView} />}
-      <main className="w-full max-w-4xl mt-8 p-4 bg-white rounded-xl shadow-lg border border-gray-200">
-        {renderView()}
-      </main>
+      <main className="flex-1 w-full">{renderView()}</main>
     </div>
   );
 };

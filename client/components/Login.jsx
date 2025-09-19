@@ -1,10 +1,21 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Toaster, toast } from "react-hot-toast";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
+import toast from "react-hot-toast";
 
 const Login = ({ setUser }) => {
   const [isLogin, setIsLogin] = useState(true);
+  const [role, setRole] = useState("citizen");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
@@ -12,115 +23,132 @@ const Login = ({ setUser }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
       const endpoint = isLogin ? "/auth/login" : "/auth/register";
-      const payload = { email, password };
-      if (!isLogin) {
-        payload.username = username;
-      }
+      const payload = { email, password, role };
+      if (!isLogin) payload.username = username;
+
       const res = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}${endpoint}`,
         payload
       );
 
-      // store token in localStorage
-      localStorage.setItem("token", res.data.token);
+      const token = res.data.token;
+      localStorage.setItem("token", token);
 
-      setUser(res.data.user);
+      const userData = {
+        _id: res.data.user?._id,
+        email: res.data.user.email,
+        username: res.data.user.username || username,
+        role: res.data.user.role || role,
+      };
+
+      setUser(userData);
+      localStorage.setItem("user", JSON.stringify(userData));
+
       toast.success(
         isLogin ? "Logged in successfully!" : "Registered successfully!"
       );
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 1000);
+
+      if (!isLogin) {
+        setIsLogin(true);
+        return;
+      }
+
+      navigate("/dashboard");
     } catch (err) {
-      // This is the updated part to get the specific error message
-      const errorMessage =
-        err.response?.data?.error || "An unexpected error occurred.";
-      toast.error(errorMessage);
+      console.error("Login/Register error:", err);
+      toast.error(
+        err.response?.data?.error || err.message || "Unexpected error"
+      );
     }
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100 dark:bg-gray-900">
-      <Toaster position="top-center" reverseOrder={false} />
-      <div className="w-full max-w-sm p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center text-gray-800 dark:text-white mb-6">
-          {isLogin ? "Login" : "Register"}
-        </h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label
-              className="block text-gray-700 dark:text-gray-200 text-sm font-bold mb-2"
-              htmlFor="email"
-            >
-              Email
-            </label>
-            <input
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 leading-tight focus:outline-none focus:shadow-outline dark:bg-gray-700"
-              id="email"
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          {!isLogin && (
-            <div className="mb-4">
-              <label
-                className="block text-gray-700 dark:text-gray-200 text-sm font-bold mb-2"
-                htmlFor="username"
-              >
-                Username
-              </label>
-              <input
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 leading-tight focus:outline-none focus:shadow-outline dark:bg-gray-700"
-                id="username"
-                type="text"
-                placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
+    <div className="flex md:flex-row flex-col min-h-screen w-full bg-gradient-to-br from-orange-500 to-amber-700">
+      {/* Left Panel */}
+      <div className="flex flex-col flex-1 justify-center items-center p-12 text-white">
+        <p className="text-6xl mb-5 text-center">🛣️</p>
+        <h1 className="text-4xl md:text-5xl font-bold text-center mb-4">
+          ResilienceNet
+        </h1>
+        <p className="text-lg text-center text-amber-50">
+          Report, track, and monitor civic and government infrastructure issues
+          with transparency and accountability.
+        </p>
+      </div>
+
+      {/* Right Panel */}
+      <div className="flex flex-1 justify-center items-center p-6">
+        <Card className="w-full max-w-md shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-center text-2xl font-bold">
+              {isLogin ? "Login" : "Register"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Role Selector */}
+            <Tabs value={role} onValueChange={setRole} className="w-full mb-6">
+              <TabsList className="grid grid-cols-2 w-full">
+                <TabsTrigger value="citizen">Citizen</TabsTrigger>
+                <TabsTrigger value="govt">Government</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {!isLogin && (
+                <div>
+                  <Label htmlFor="username">Username</Label>
+                  <Input
+                    id="username"
+                    placeholder="Enter your username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <Button type="submit" className="w-full">
+                {isLogin ? "Sign In" : "Register"}
+              </Button>
+            </form>
+
+            {/* Switch login/register */}
+            <div className="mt-4 text-center">
+              <Button variant="link" onClick={() => setIsLogin(!isLogin)}>
+                {isLogin
+                  ? "Need an account? Register"
+                  : "Already have an account? Login"}
+              </Button>
             </div>
-          )}
-          <div className="mb-6">
-            <label
-              className="block text-gray-700 dark:text-gray-200 text-sm font-bold mb-2"
-              htmlFor="password"
-            >
-              Password
-            </label>
-            <input
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 mb-3 leading-tight focus:outline-none focus:shadow-outline dark:bg-gray-700"
-              id="password"
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200 ease-in-out"
-              type="submit"
-            >
-              {isLogin ? "Sign In" : "Register"}
-            </button>
-          </div>
-        </form>
-        <div className="mt-4 text-center">
-          <button
-            className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800 transition duration-200 ease-in-out"
-            onClick={() => setIsLogin(!isLogin)}
-          >
-            {isLogin
-              ? "Need an account? Register"
-              : "Already have an account? Login"}
-          </button>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
