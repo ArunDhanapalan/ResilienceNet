@@ -3,6 +3,7 @@ import { toast } from "react-hot-toast";
 import axios from "axios";
 import Dashboard from "../components/Dashboard";
 import Login from "../components/Login";
+import LoadingPage from "../components/LoadingPage";
 import Report from "../components/Report";
 import Nav from "../components/Nav";
 
@@ -76,11 +77,7 @@ const App = () => {
   }, [user]);
 
   if (loading)
-    return (
-      <div className="flex items-center justify-center h-screen text-lg font-semibold">
-        Loading...
-      </div>
-    );
+    return <LoadingPage />;
 
   const renderView = () => {
     if (!user)

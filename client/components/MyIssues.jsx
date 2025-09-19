@@ -49,13 +49,9 @@ const MyIssues = ({ issues, loading, user, refreshFlag, onIssueClick }) => {
   };
 
   const openDialog = (issue) => {
-    if (onIssueClick) {
-      onIssueClick(issue._id);
-    } else {
-      setSelectedIssue(issue);
-      setDialogOpen(true);
-      setCurrentImageIndex(0);
-    }
+    setSelectedIssue(issue);
+    setDialogOpen(true);
+    setCurrentImageIndex(0);
   };
 
   const nextImage = (images) => {

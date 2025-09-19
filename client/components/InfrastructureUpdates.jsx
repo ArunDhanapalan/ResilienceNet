@@ -16,7 +16,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-const InfrastructureUpdates = () => {
+const InfrastructureUpdates = ({ user }) => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -91,6 +91,19 @@ const InfrastructureUpdates = () => {
         <Skeleton className="h-[200px] w-full rounded-lg" />
         <Skeleton className="h-[200px] w-full rounded-lg" />
         <Skeleton className="h-[200px] w-full rounded-lg" />
+      </div>
+    );
+  }
+
+  // Check if user has citizen role
+  if (user?.role !== 'citizen') {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8">
+          <Building2 className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+          <h2 className="text-xl font-semibold text-gray-700 mb-2">Access Denied</h2>
+          <p className="text-gray-500">Only citizens can view infrastructure updates.</p>
+        </div>
       </div>
     );
   }

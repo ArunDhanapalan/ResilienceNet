@@ -95,13 +95,13 @@ const Dashboard = ({ user }) => {
       case "report":
         return <Report getIssues={() => setRefreshFlag(prev => !prev)} setView={setView} />;
       case "my_issues":
-        return <MyIssues issues={issues} loading={loading} user={user} onIssueClick={setShowFullReport} />;
+        return <MyIssues issues={issues} loading={loading} user={user} />;
       case "community":
-        return <CommunityIssues issues={issues} loading={loading} user={user} onIssueClick={setShowFullReport} />;
+        return <CommunityIssues issues={issues} loading={loading} user={user} />;
       case "infra":
-        return <AddInfra />;
+        return <AddInfra user={user} />;
       case "infra_updates":
-        return <InfrastructureUpdates />;
+        return <InfrastructureUpdates user={user} />;
       default:
         return <IssuesMap issues={issues} onIssueClick={setShowFullReport} />;
     }
@@ -211,17 +211,17 @@ const Dashboard = ({ user }) => {
   if (user?.role === 'govt') {
     return (
         <div className="h-screen w-full flex flex-col">
-          <Nav user={user} setView={setView} currentView={view} logout={() => { localStorage.clear(); window.location.reload(); }} />
-            <div className="flex-1 overflow-auto p-4 pb-20 md:pb-4">
+            <div className="flex-1 overflow-auto p-4 pb-20">
                 {view === 'infra' ? (
                   <AddInfra />
                 ) : (
                   <>
                     {renderDashboardCards()}
-                    <GovernmentDashboard user={user} onIssueClick={setShowFullReport} />
+                    <GovernmentDashboard user={user} />
                   </>
                 )}
             </div>
+            <Nav user={user} setView={setView} currentView={view} logout={() => { localStorage.clear(); window.location.reload(); }} />
             {showFullReport && (
               <Dialog
                 open={!!showFullReport}
@@ -242,11 +242,11 @@ const Dashboard = ({ user }) => {
 
   return (
     <div className="h-screen w-full flex flex-col">
-    <Nav user={user} setView={setView} currentView={view} logout={() => { localStorage.clear(); window.location.reload(); }} />
-      <div className="flex-1 overflow-auto p-4 pb-20 md:pb-4">
+      <div className="flex-1 overflow-auto p-4 pb-20">
         {view === 'map' && renderDashboardCards()}
         {renderView()}
       </div>
+      <Nav user={user} setView={setView} currentView={view} logout={() => { localStorage.clear(); window.location.reload(); }} />
       {showFullReport && (
         <Dialog
           open={!!showFullReport}

@@ -15,7 +15,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select.jsx';
 import { Skeleton } from './ui/skeleton.jsx';
 
-const GovernmentDashboard = ({ user, onIssueClick }) => {
+const GovernmentDashboard = ({ user }) => {
     const [issues, setIssues] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedIssue, setSelectedIssue] = useState(null);
@@ -50,15 +50,11 @@ const GovernmentDashboard = ({ user, onIssueClick }) => {
         getIssues();
     }, []);
 
-    const openDialog = (issue) => {
-        if (onIssueClick) {
-            onIssueClick(issue._id);
-        } else {
-            setSelectedIssue(issue);
-            setDialogOpen(true);
-            setCurrentImageIndex(0);
-        }
-    };
+  const openDialog = (issue) => {
+    setSelectedIssue(issue);
+    setDialogOpen(true);
+    setCurrentImageIndex(0);
+  };
 
     const nextImage = (images) => {
         setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
@@ -71,6 +67,18 @@ const GovernmentDashboard = ({ user, onIssueClick }) => {
     };
 
     const imagesToDisplay = selectedIssue?.images || [];
+
+    // Check if user has government role
+    if (user?.role !== 'govt') {
+        return (
+            <div className="p-4 space-y-4">
+                <div className="text-center py-8">
+                    <h2 className="text-xl font-semibold text-gray-700 mb-2">Access Denied</h2>
+                    <p className="text-gray-500">Only government officials can access this dashboard.</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-4 space-y-4">
