@@ -1,8 +1,4 @@
 const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
-
-
-const mongoose = require("mongoose");
 
 const issueSchema = new mongoose.Schema(
   {
@@ -12,13 +8,10 @@ const issueSchema = new mongoose.Schema(
       lat: { type: Number, required: true },
       lng: { type: Number, required: true },
     },
-    // Changed from a single String to an array of Strings
-    images: [
-      {
-        type: String,
-        required: true,
-      },
-    ],
+    images: [{
+      type: String,
+      required: false,
+    }],
     reporter: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -32,11 +25,30 @@ const issueSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    category: {
+      type: String,
+      enum: ["Roads", "Water", "Electricity", "Sanitation", "Public Property", "Other"],
+      default: "Other",
+    },
+    priority: {
+      type: String,
+      enum: ["Low", "Medium", "High", "Critical"],
+      default: "Medium",
+    },
+    assignedDepartment: {
+      type: String,
+      required: false,
+    },
+    estimatedResolutionTime: {
+      type: String,
+      required: false,
+    },
+    resolutionNotes: {
+      type: String,
+      required: false,
+    },
   },
   { timestamps: true }
 );
 
 module.exports = mongoose.model("Issue", issueSchema);
-
-const Issue = mongoose.model("Issue", issueSchema);
-module.exports = Issue;

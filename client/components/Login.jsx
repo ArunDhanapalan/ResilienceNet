@@ -52,12 +52,7 @@ const Login = ({ setUser }) => {
         isLogin ? "Logged in successfully!" : "Registered successfully!"
       );
 
-      // Check user role and navigate accordingly
-      if (userData.role === 'govt') {
-        navigate("/govt-dashboard");
-      } else {
-        navigate("/dashboard"); // Citizen dashboard
-      }
+      // No need to navigate, the Dashboard component will handle the view based on user role
       
     } catch (err) {
       console.error("Login/Register error:", err);

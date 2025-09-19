@@ -1,24 +1,85 @@
-// client/components/AddInfra.jsx
-import React, { useState } from "react";
-import axios from "../utils/axiosConfig.js";
-import { toast } from "react-hot-toast";
-import { Card, CardHeader, CardTitle, CardContent } from "./ui/card.jsx";
-import { Input } from "./ui/input.jsx";
-import { Button } from "./ui/button.jsx";
-import { Label } from "./ui/label.jsx";
+import React, { useState } from 'react';
+import axios from '../utils/axiosConfig.js';
+import { toast } from 'react-hot-toast';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card.jsx';
+import { Button } from './ui/button.jsx';
+import { Input } from './ui/input.jsx';
+import { Label } from './ui/label.jsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select.jsx';
+import { Textarea } from './ui/textarea.jsx';
+import { MapPin, Upload, X } from 'lucide-react';
 
 const AddInfra = () => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [formData, setFormData] = useState({
+    name: '',
+    type: '',
+    description: '',
+    lat: '',
+    lng: '',
+    area: '',
+    budget: '',
+    estimatedCompletion: '',
+    contractor: '',
+    progress: 0,
+    notes: ''
+  });
   const [images, setImages] = useState([]);
-  const [location, setLocation] = useState({ lat: 13.0827, lng: 80.2707 }); // Chennai coords
-  const [status, setStatus] = useState("Planned");
+  const [imagePreview, setImagePreview] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSelectChange = (name, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleImageChange = (e) => {
     if (e.target.files) {
-      setImages(Array.from(e.target.files));
+      const files = Array.from(e.target.files);
+      setImages(files);
+      
+      // Create preview URLs
+      const previews = files.map(file => URL.createObjectURL(file));
+      setImagePreview(previews);
+    }
+  };
+
+  const removeImage = (index) => {
+    const newImages = images.filter((_, i) => i !== index);
+    const newPreviews = imagePreview.filter((_, i) => i !== index);
+    setImages(newImages);
+    setImagePreview(newPreviews);
+  };
+
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          setFormData(prev => ({
+            ...prev,
+            lat: latitude.toString(),
+            lng: longitude.toString()
+          }));
+          toast.success('Location obtained!');
+        },
+        (err) => {
+          console.error('Geolocation error:', err);
+          toast.error('Location access denied or timed out.');
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    } else {
+      toast.error('Geolocation not supported.');
     }
   };
 
@@ -26,72 +87,266 @@ const AddInfra = () => {
     e.preventDefault();
     setLoading(true);
 
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("description", description);
-    formData.append("lat", location.lat);
-    formData.append("lng", location.lng);
-    formData.append("status", status);
-    images.forEach((img) => formData.append("images", img));
-
     try {
-      await axios.post("/govt/infra/add", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const submitData = new FormData();
+      
+      // Append form data
+      Object.keys(formData).forEach(key => {
+        if (formData[key] !== '') {
+          submitData.append(key, formData[key]);
+        }
       });
-      toast.success("Infrastructure added successfully!");
-      setTitle("");
-      setDescription("");
+
+      // Append images
+      images.forEach((img) => submitData.append('images', img));
+
+      await axios.post('/infrastructure/create', submitData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      
+      toast.success('Infrastructure project created successfully!');
+      
+      // Reset form
+      setFormData({
+        name: '',
+        type: '',
+        description: '',
+        lat: '',
+        lng: '',
+        area: '',
+        budget: '',
+        estimatedCompletion: '',
+        contractor: '',
+        progress: 0,
+        notes: ''
+      });
       setImages([]);
-      setStatus("Planned");
+      setImagePreview([]);
     } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to add infrastructure");
+      toast.error('Failed to create infrastructure project');
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Add New Government Infrastructure</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="title">Title</Label>
-            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-          </div>
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-              className="w-full px-4 py-2 border rounded-md"
-              rows={4}
-            />
-          </div>
-          <div>
-            <Label htmlFor="images">Images</Label>
-            <Input id="images" type="file" multiple onChange={handleImageChange} />
-          </div>
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Planned">Planned</SelectItem>
-              <SelectItem value="Under Construction">Under Construction</SelectItem>
-              <SelectItem value="Completed">Completed</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Adding..." : "Add Infrastructure"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+    <div className="max-w-4xl mx-auto p-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <MapPin className="h-6 w-6" />
+            <span>Add Infrastructure Project</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="name">Project Name *</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter project name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="type">Project Type *</Label>
+                <Select value={formData.type} onValueChange={(value) => handleSelectChange('type', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select project type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Road">Road</SelectItem>
+                    <SelectItem value="Bridge">Bridge</SelectItem>
+                    <SelectItem value="Building">Building</SelectItem>
+                    <SelectItem value="Park">Park</SelectItem>
+                    <SelectItem value="Water System">Water System</SelectItem>
+                    <SelectItem value="Electricity Grid">Electricity Grid</SelectItem>
+                    <SelectItem value="Sewage System">Sewage System</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="description">Description *</Label>
+              <Textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                required
+                rows={3}
+                placeholder="Describe the infrastructure project"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="lat">Latitude *</Label>
+                <Input
+                  id="lat"
+                  name="lat"
+                  type="number"
+                  step="any"
+                  value={formData.lat}
+                  onChange={handleChange}
+                  required
+                  placeholder="12.9716"
+                />
+              </div>
+              <div>
+                <Label htmlFor="lng">Longitude *</Label>
+                <Input
+                  id="lng"
+                  name="lng"
+                  type="number"
+                  step="any"
+                  value={formData.lng}
+                  onChange={handleChange}
+                  required
+                  placeholder="77.5946"
+                />
+              </div>
+              <div className="flex items-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={getCurrentLocation}
+                  className="w-full"
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Get Location
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="area">Area *</Label>
+              <Input
+                id="area"
+                name="area"
+                value={formData.area}
+                onChange={handleChange}
+                required
+                placeholder="Enter area/location name"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="budget">Budget (₹)</Label>
+                <Input
+                  id="budget"
+                  name="budget"
+                  type="number"
+                  value={formData.budget}
+                  onChange={handleChange}
+                  placeholder="Enter budget amount"
+                />
+              </div>
+              <div>
+                <Label htmlFor="estimatedCompletion">Estimated Completion</Label>
+                <Input
+                  id="estimatedCompletion"
+                  name="estimatedCompletion"
+                  type="date"
+                  value={formData.estimatedCompletion}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="contractor">Contractor</Label>
+                <Input
+                  id="contractor"
+                  name="contractor"
+                  value={formData.contractor}
+                  onChange={handleChange}
+                  placeholder="Enter contractor name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="progress">Progress (%)</Label>
+                <Input
+                  id="progress"
+                  name="progress"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={formData.progress}
+                  onChange={handleChange}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                rows={2}
+                placeholder="Additional notes about the project"
+              />
+            </div>
+
+            {/* Image Upload */}
+            <div>
+              <Label htmlFor="images">Project Images</Label>
+              <div className="mt-2">
+                <input
+                  type="file"
+                  id="images"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+              </div>
+              
+              {/* Image Preview */}
+              {imagePreview.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Image Previews:</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {imagePreview.map((preview, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={preview}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-md border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? 'Creating Project...' : 'Create Infrastructure Project'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

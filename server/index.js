@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const issueRoutes = require('./routes/issues');
+const infrastructureRoutes = require('./routes/infrastructure');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -39,6 +40,7 @@ mongoose.connect(process.env.MONGO_URI, {
 // API Routes
 app.use('/auth', authRoutes);
 app.use('/issues', issueRoutes);
+app.use('/infrastructure', infrastructureRoutes);
 
 // 404 Handler
 app.use((req, res) => {

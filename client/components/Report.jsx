@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import axios from "../utils/axiosConfig.js";
+import { categorizeImages, getCategorySuggestions } from "../utils/imageCategorization.js";
 
 import {
   Select,
@@ -27,8 +28,12 @@ const Report = ({ getIssues, setView }) => {
   const [location, setLocation] = useState(chennaiCoords);
   const [area, setArea] = useState("");
   const [category, setCategory] = useState("Other"); // New state for category
+  const [priority, setPriority] = useState("Medium"); // New state for priority
   const [loading, setLoading] = useState(false);
   const [areaLoading, setAreaLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState([]);
+  const [categorizing, setCategorizing] = useState(false);
+  const [categorySuggestions, setCategorySuggestions] = useState([]);
 
   const getAreaFromCoords = async (lat, lng) => {
     setAreaLoading(true);
@@ -82,10 +87,48 @@ const Report = ({ getIssues, setView }) => {
     getAreaFromCoords(location.lat, location.lng);
   }, [location]);
 
-  const handleImageChange = (e) => {
-    if (e.target.files) {
-      setImages(Array.from(e.target.files));
+  // Auto-suggest category based on description
+  useEffect(() => {
+    if (description.trim()) {
+      const suggestions = getCategorySuggestions(description);
+      setCategorySuggestions(suggestions);
+    } else {
+      setCategorySuggestions([]);
     }
+  }, [description]);
+
+  const handleImageChange = async (e) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setImages(files);
+      
+      // Create preview URLs
+      const previews = files.map(file => URL.createObjectURL(file));
+      setImagePreview(previews);
+      
+      // Auto-categorize images if there are any
+      if (files.length > 0) {
+        setCategorizing(true);
+        try {
+          const result = await categorizeImages(files);
+          if (result.confidence > 0.5) {
+            setCategory(result.category);
+            toast.success(`Auto-categorized as: ${result.category} (${Math.round(result.confidence * 100)}% confidence)`);
+          }
+        } catch (error) {
+          console.error('Error categorizing images:', error);
+        } finally {
+          setCategorizing(false);
+        }
+      }
+    }
+  };
+
+  const removeImage = (index) => {
+    const newImages = images.filter((_, i) => i !== index);
+    const newPreviews = imagePreview.filter((_, i) => i !== index);
+    setImages(newImages);
+    setImagePreview(newPreviews);
   };
 
   const handleSubmit = async (e) => {
@@ -98,7 +141,8 @@ const Report = ({ getIssues, setView }) => {
     formData.append("lat", location.lat);
     formData.append("lng", location.lng);
     formData.append("area", area);
-    formData.append("category", category); // Append the new category
+    formData.append("category", category);
+    formData.append("priority", priority);
 
     images.forEach((img) => formData.append("images", img));
 
@@ -141,25 +185,93 @@ const Report = ({ getIssues, setView }) => {
         className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 transition duration-200"
       />
       {/* Category selection dropdown */}
-      <Select value={category} onValueChange={setCategory}>
+      <div className="space-y-2">
+        <Select value={category} onValueChange={setCategory}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select a category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Roads">Roads</SelectItem>
+            <SelectItem value="Water">Water</SelectItem>
+            <SelectItem value="Electricity">Electricity</SelectItem>
+            <SelectItem value="Sanitation">Sanitation</SelectItem>
+            <SelectItem value="Public Property">Public Property</SelectItem>
+            <SelectItem value="Other">Other</SelectItem>
+          </SelectContent>
+        </Select>
+        
+        {/* Category suggestions based on description */}
+        {categorySuggestions.length > 0 && (
+          <div className="space-y-1">
+            <p className="text-sm text-gray-600">Suggested categories based on your description:</p>
+            <div className="flex flex-wrap gap-2">
+              {categorySuggestions.slice(0, 3).map((suggestion, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setCategory(suggestion.category)}
+                  className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
+                >
+                  {suggestion.category} ({Math.round(suggestion.confidence * 100)}%)
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* AI categorization status */}
+        {categorizing && (
+          <div className="flex items-center space-x-2 text-sm text-blue-600">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            <span>AI is analyzing your images...</span>
+          </div>
+        )}
+      </div>
+
+      {/* Priority selection dropdown */}
+      <Select value={priority} onValueChange={setPriority}>
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select a category" />
+          <SelectValue placeholder="Select priority level" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="Roads">Roads</SelectItem>
-          <SelectItem value="Water">Water</SelectItem>
-          <SelectItem value="Electricity">Electricity</SelectItem>
-          <SelectItem value="Sanitation">Sanitation</SelectItem>
-          <SelectItem value="Public Property">Public Property</SelectItem>
-          <SelectItem value="Other">Other</SelectItem>
+          <SelectItem value="Low">Low</SelectItem>
+          <SelectItem value="Medium">Medium</SelectItem>
+          <SelectItem value="High">High</SelectItem>
+          <SelectItem value="Critical">Critical</SelectItem>
         </SelectContent>
       </Select>
       <input
         type="file"
         multiple
+        accept="image/*"
         onChange={handleImageChange}
         className="w-full text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
       />
+      
+      {/* Image Preview */}
+      {imagePreview.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-gray-700">Image Previews:</h4>
+          <div className="grid grid-cols-2 gap-2">
+            {imagePreview.map((preview, index) => (
+              <div key={index} className="relative">
+                <img
+                  src={preview}
+                  alt={`Preview ${index + 1}`}
+                  className="w-full h-24 object-cover rounded-md border"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeImage(index)}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <button
         type="button"
         onClick={getLocation}

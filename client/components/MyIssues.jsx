@@ -18,7 +18,7 @@ import {
   DialogDescription,
 } from "./ui/dialog";
 
-const MyIssues = ({ issues, loading, user, refreshFlag }) => {
+const MyIssues = ({ issues, loading, user, refreshFlag, onIssueClick }) => {
   const [myIssues, setMyIssues] = useState([]);
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -49,9 +49,13 @@ const MyIssues = ({ issues, loading, user, refreshFlag }) => {
   };
 
   const openDialog = (issue) => {
-    setSelectedIssue(issue);
-    setDialogOpen(true);
-    setCurrentImageIndex(0);
+    if (onIssueClick) {
+      onIssueClick(issue._id);
+    } else {
+      setSelectedIssue(issue);
+      setDialogOpen(true);
+      setCurrentImageIndex(0);
+    }
   };
 
   const nextImage = (images) => {

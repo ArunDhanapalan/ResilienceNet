@@ -15,7 +15,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select.jsx';
 import { Skeleton } from './ui/skeleton.jsx';
 
-const GovernmentDashboard = ({ user }) => {
+const GovernmentDashboard = ({ user, onIssueClick }) => {
     const [issues, setIssues] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedIssue, setSelectedIssue] = useState(null);
@@ -51,9 +51,13 @@ const GovernmentDashboard = ({ user }) => {
     }, []);
 
     const openDialog = (issue) => {
-        setSelectedIssue(issue);
-        setDialogOpen(true);
-        setCurrentImageIndex(0);
+        if (onIssueClick) {
+            onIssueClick(issue._id);
+        } else {
+            setSelectedIssue(issue);
+            setDialogOpen(true);
+            setCurrentImageIndex(0);
+        }
     };
 
     const nextImage = (images) => {
