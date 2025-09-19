@@ -10,7 +10,8 @@ import {
   LogOut,
   Home,
   Settings,
-  TrendingUp
+  TrendingUp,
+  Landmark
 } from 'lucide-react';
 
 const Nav = ({ user, setView, currentView, logout }) => {
@@ -22,13 +23,13 @@ const Nav = ({ user, setView, currentView, logout }) => {
           {user?.role !== 'govt' ? (
             <>
               <Button
-                variant={currentView === 'map' ? 'default' : 'ghost'}
+                variant={currentView === 'home' ? 'default' : 'ghost'}
                 size="sm"
-                onClick={() => setView('map')}
+                onClick={() => setView('home')}
                 className="flex flex-col items-center space-y-1 h-16 w-16"
               >
-                <MapPin className="h-5 w-5" />
-                <span className="text-xs">Map</span>
+                <Home className="h-5 w-5" />
+                <span className="text-xs">Home</span>
               </Button>
               <Button
                 variant={currentView === 'community' ? 'default' : 'ghost'}
@@ -79,19 +80,19 @@ const Nav = ({ user, setView, currentView, logout }) => {
           ) : (
             <>
               <Button
-                variant={currentView === 'map' ? 'default' : 'ghost'}
+                variant={currentView === 'home' ? 'default' : 'ghost'}
                 size="sm"
-                onClick={() => setView('map')}
-                className="flex flex-col items-center space-y-1 h-16 w-16"
+                onClick={() => setView('home')}
+                className="flex flex-col items-center space-y-1 p-x-2 h-16 w-16"
               >
-                <MapPin className="h-5 w-5" />
-                <span className="text-xs">Map</span>
+                <Home className="h-5 w-5" />
+                <span className="text-xs">Home</span>
               </Button>
               <Button
                 variant={currentView === 'community' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setView('community')}
-                className="flex flex-col items-center space-y-1 h-16 w-16"
+                className="flex flex-col items-center space-y-1 p-x-2 h-16 w-16"
               >
                 <Users className="h-5 w-5" />
                 <span className="text-xs">Issues</span>
@@ -100,16 +101,29 @@ const Nav = ({ user, setView, currentView, logout }) => {
                 variant={currentView === 'infra' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setView('infra')}
-                className="flex flex-col items-center space-y-1 h-16 w-16"
+                className="flex flex-col items-center space-y-1 p-x-2 h-16 w-16"
               >
                 <Building2 className="h-5 w-5" />
                 <span className="text-xs">Add Infra</span>
+              </Button>
+              <Button variant={`disabled`} className={`w-fit h-fit flex flex-col rounded-full hover-none bg-purple-200`}>
+                <Landmark className='h-10 w-10'  />
+                <p>Government</p>
+              </Button>
+              <Button
+                variant={currentView === 'infra_updates' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setView('infra_updates')}
+                className="flex flex-col items-center space-y-1 h-16 w-16"
+              >
+                <TrendingUp className="h-5 w-5" />
+                <span className="text-xs m-x-2">Infra Status</span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={logout}
-                className="flex flex-col items-center space-y-1 h-16 w-16"
+                className="flex flex-col items-center hover:bg-red-400/90 space-y-1 p-x-2 h-16 w-16"
               >
                 <LogOut className="h-5 w-5" />
                 <span className="text-xs">Logout</span>

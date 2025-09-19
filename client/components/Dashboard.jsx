@@ -1,4 +1,3 @@
-// client/components/Dashboard.jsx
 import React, { useState, useEffect } from "react";
 import axios from "../utils/axiosConfig.js";
 import { toast } from "react-hot-toast";
@@ -14,6 +13,7 @@ import Nav from "./Nav.jsx";
 import { Dialog, DialogContent } from "./ui/dialog.jsx";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card.jsx";
 import { Button } from "./ui/button.jsx";
+
 import {
   MapPin,
   Users,
@@ -28,9 +28,10 @@ import {
 const Dashboard = ({ user }) => {
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState("map");
+  const [view, setView] = useState("home");
   const [showFullReport, setShowFullReport] = useState(null);
   const [refreshFlag, setRefreshFlag] = useState(false);
+  const [infraProjects, setInfraProjects] = useState([]);
   const [stats, setStats] = useState({
     totalIssues: 0,
     resolvedIssues: 0,
@@ -38,76 +39,64 @@ const Dashboard = ({ user }) => {
     criticalIssues: 0,
   });
 
-  const getIssues = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/issues`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setIssues(res.data);
-      calculateStats(res.data);
-    } catch (err) {
-      toast.error("Failed to fetch issues.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ... (imports and state variables)
 
-  const calculateStats = (issuesData) => {
-    const total = issuesData.length;
-    const resolved = issuesData.filter(
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+
+        const issuesRes = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/issues`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setIssues(issuesRes.data || []);
+
+        const infraRes = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/infrastructure`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setInfraProjects(infraRes.data || []);
+      } catch (err) {
+        toast.error("Failed to fetch data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [refreshFlag]);
+
+  useEffect(() => {
+    const totalIssues = issues.length;
+    const resolvedIssues = issues.filter(
       (issue) => issue.status === "Resolved"
     ).length;
-    const inProgress = issuesData.filter(
+    const inProgressIssues = issues.filter(
       (issue) => issue.status === "In Progress"
     ).length;
-    const critical = issuesData.filter(
+    const criticalIssues = issues.filter(
       (issue) => issue.priority === "Critical"
+    ).length;
+    const infraProjectsCount = infraProjects.filter(
+      (project) => project.status !== "Completed"
     ).length;
 
     setStats({
-      totalIssues: total,
-      resolvedIssues: resolved,
-      inProgressIssues: inProgress,
-      criticalIssues: critical,
+      totalIssues,
+      resolvedIssues,
+      inProgressIssues,
+      criticalIssues,
+      infraProjectsCount,
     });
-  };
+  }, [issues, infraProjects]);
 
-  const renderView = () => {
-    switch (view) {
-      case "map":
-        return <IssuesMap issues={issues} onIssueClick={setShowFullReport} />;
-      case "report":
-        return (
-          <Report
-            getIssues={() => setRefreshFlag((prev) => !prev)}
-            setView={setView}
-          />
-        );
-      case "my_issues":
-        return <MyIssues issues={issues} loading={loading} user={user} />;
-      case "community":
-        return (
-          <CommunityIssues issues={issues} loading={loading} user={user} />
-        );
-      case "infra":
-        return <AddInfra user={user} />;
-      case "infra_updates":
-        return <InfrastructureUpdates user={user} />;
-      default:
-        return <IssuesMap issues={issues} onIssueClick={setShowFullReport} />;
-    }
-  };
-
+  // ... (rest of the component)
   const renderDashboardCards = () => {
     if (user?.role === "govt") {
       return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -152,107 +141,137 @@ const Dashboard = ({ user }) => {
               </div>
             </CardContent>
           </Card>
-          <Card
-            className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => setView("infra_updates")}
-          >
+
+          <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Infrastructure
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">Projects</CardTitle>
               <Building2 className="h-4 w-4 text-purple-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-600">+</div>
-              <p className="text-xs text-muted-foreground">View projects</p>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    } else {
-      return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card
-            className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => setView("map")}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Map View</CardTitle>
-              <MapPin className="h-4 w-4 text-orange-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalIssues}</div>
-              <p className="text-xs text-muted-foreground">
-                Total issues reported
-              </p>
-            </CardContent>
-          </Card>
-          <Card
-            className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => setView("community")}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Community</CardTitle>
-              <Users className="h-4 w-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalIssues}</div>
-              <p className="text-xs text-muted-foreground">Community issues</p>
-            </CardContent>
-          </Card>
-          <Card
-            className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => setView("my_issues")}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">My Issues</CardTitle>
-              <FileText className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {
-                  issues.filter((issue) => issue.reporter?._id === user?._id)
-                    .length
-                }
+              <div className="text-2xl font-bold text-purple-600">
+                {stats.infraProjectsCount}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Your reported issues
-              </p>
-            </CardContent>
-          </Card>
-          <Card
-            className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => setView("report")}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Report Issue
-              </CardTitle>
-              <Plus className="h-4 w-4 text-purple-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">+</div>
-              <p className="text-xs text-muted-foreground">Report new issue</p>
             </CardContent>
           </Card>
         </div>
       );
     }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card
+          className="hover:shadow-md transition-shadow cursor-pointer"
+          onClick={() => setView("map")}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Map View</CardTitle>
+            <MapPin className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalIssues}</div>
+            <p className="text-xs text-muted-foreground">
+              Total issues reported
+            </p>
+          </CardContent>
+        </Card>
+        <Card
+          className="hover:shadow-md transition-shadow cursor-pointer"
+          onClick={() => setView("community")}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Community</CardTitle>
+            <Users className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalIssues}</div>
+            <p className="text-xs text-muted-foreground">Community issues</p>
+          </CardContent>
+        </Card>
+        <Card
+          className="hover:shadow-md transition-shadow cursor-pointer"
+          onClick={() => setView("my_issues")}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">My Issues</CardTitle>
+            <FileText className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {
+                issues.filter((issue) => issue.reporter?._id === user?._id)
+                  .length
+              }
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Your reported issues
+            </p>
+          </CardContent>
+        </Card>
+        <Card
+          className="hover:shadow-md transition-shadow cursor-pointer"
+          onClick={() => setView("report")}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Report Issue</CardTitle>
+            <Plus className="h-4 w-4 text-purple-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">+</div>
+            <p className="text-xs text-muted-foreground">Report new issue</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   };
 
-  // If the user is government, render the government dashboard
+  const renderView = () => {
+    switch (view) {
+      case "map":
+        return <IssuesMap issues={issues} onIssueClick={setShowFullReport} />;
+      case "report":
+        return (
+          <Report
+            getIssues={() => setRefreshFlag((prev) => !prev)}
+            setView={setView}
+          />
+        );
+      case "my_issues":
+        return <MyIssues issues={issues} loading={loading} user={user} />;
+      case "community":
+        return (
+          <>
+            {user.role === "govt" ? (
+              <GovernmentDashboard user={user} />
+            ) : (
+              <CommunityIssues issues={issues} loading={loading} user={user} />
+            )}
+          </>
+        );
+
+      case "infra":
+        return <AddInfra user={user} />;
+      case "infra_updates":
+        return (
+          <InfrastructureUpdates user={user} infraProjects={infraProjects} />
+        );
+      case "home":
+        return (
+          <>
+            {renderDashboardCards()}
+            <IssuesMap issues={issues} onIssueClick={setShowFullReport} />
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
   if (user?.role === "govt") {
     return (
       <div className="h-screen w-full flex flex-col">
         <div className="flex-1 overflow-auto p-4 pb-20">
-          {view === "infra" ? (
-            <AddInfra />
-          ) : (
-            <>
-              {renderDashboardCards()}
-              <GovernmentDashboard user={user} />
-            </>
-          )}
+          {view === "home2" && renderDashboardCards()}
+          {view !== "home2" && renderView()}
         </div>
         <Nav
           user={user}
@@ -262,6 +281,10 @@ const Dashboard = ({ user }) => {
             localStorage.clear();
             window.location.reload();
           }}
+          // extraTabs={[
+          //   { key: "issues", label: "Issues", icon: FileText },
+          //   { key: "infra_updates", label: "Infrastructure", icon: Building2 },
+          // ]}
         />
         {showFullReport && (
           <Dialog

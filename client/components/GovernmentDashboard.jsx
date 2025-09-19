@@ -152,7 +152,7 @@ const GovernmentDashboard = ({ user }) => {
 
       {/* dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-xl p-0">
+        <DialogContent  className={`overflow-y-scroll h-[90vh] p-0`}>
           <DialogHeader className="p-6 pb-2">
             <DialogTitle>{selectedIssue?.title}</DialogTitle>
             <DialogDescription>{selectedIssue?.description}</DialogDescription>
@@ -214,7 +214,7 @@ const GovernmentDashboard = ({ user }) => {
           </div>
         </DialogContent>
       </Dialog>
-      <IssuesMap issues={issues} onIssueClick={openDialog} />
+      {/* <IssuesMap issues={issues} onIssueClick={openDialog} /> */}
     </div>
   );
 };

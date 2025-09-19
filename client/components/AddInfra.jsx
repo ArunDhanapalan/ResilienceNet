@@ -7,7 +7,7 @@ import { Input } from './ui/input.jsx';
 import { Label } from './ui/label.jsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select.jsx';
 import { Textarea } from './ui/textarea.jsx';
-import { MapPin, Upload, X } from 'lucide-react';
+import { MapPin, X } from 'lucide-react';
 
 const AddInfra = ({ user }) => {
   const [formData, setFormData] = useState({
@@ -21,7 +21,8 @@ const AddInfra = ({ user }) => {
     estimatedCompletion: '',
     contractor: '',
     progress: 0,
-    notes: ''
+    notes: '',
+    status: 'Planned', // Default status
   });
   const [images, setImages] = useState([]);
   const [imagePreview, setImagePreview] = useState([]);
@@ -118,7 +119,8 @@ const AddInfra = ({ user }) => {
         estimatedCompletion: '',
         contractor: '',
         progress: 0,
-        notes: ''
+        notes: '',
+        status: 'Planned',
       });
       setImages([]);
       setImagePreview([]);
@@ -130,9 +132,7 @@ const AddInfra = ({ user }) => {
     }
   };
 
-  // Check if user has government role
 //   if (user?.role !== 'govt') {
-//     console.log(user?.role);
 //     return (
 //       <div className="max-w-4xl mx-auto p-4">
 //         <Card>
@@ -252,6 +252,22 @@ const AddInfra = ({ user }) => {
                 required
                 placeholder="Enter area/location name"
               />
+            </div>
+            
+            <div>
+              <Label htmlFor="status">Status *</Label>
+              <Select value={formData.status} onValueChange={(value) => handleSelectChange('status', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select project status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Planned">Planned</SelectItem>
+                  <SelectItem value="Under Construction">Under Construction</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                  <SelectItem value="Maintenance Required">Maintenance Required</SelectItem>
+                  <SelectItem value="Out of Service">Out of Service</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
