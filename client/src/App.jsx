@@ -8,6 +8,7 @@ import Report from "../components/Report";
 import Nav from "../components/Nav";
 import MyIssues from "../components/MyIssues";
 import GovernmentDashboard from "../components/GovernmentDashboard";
+import Header from "../components/Header";
 
 axios.defaults.withCredentials = true;
 
@@ -120,8 +121,11 @@ const App = () => {
   };
 
   return (
-    <div className="flex flex-col w-full h-screen bg-gray-50 dark:bg-gray-900">
-      <main className="flex-1 w-full">{renderView()}</main>
+    <div className="flex flex-col w-full h-screen">
+      <main className="flex-1 w-full bg-orange-50">
+        <Header user={user} />
+        {renderView()}
+      </main>
     </div>
   );
 };

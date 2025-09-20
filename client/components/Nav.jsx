@@ -71,7 +71,7 @@ const Nav = ({ user, setView, currentView, logout }) => {
                 variant="ghost"
                 size="sm"
                 onClick={logout}
-                className="flex flex-col items-center space-y-1 h-16 w-16"
+                className="flex flex-col items-center hover:bg-red-600/60 space-y-1 h-16 w-16"
               >
                 <LogOut className="h-5 w-5" />
                 <span className="text-xs">Logout</span>
@@ -106,10 +106,10 @@ const Nav = ({ user, setView, currentView, logout }) => {
                 <Building2 className="h-5 w-5" />
                 <span className="text-xs">Add Infra</span>
               </Button>
-              <Button variant={`disabled`} className={`w-fit h-fit flex flex-col rounded-full hover-none bg-purple-200`}>
+              {/* <Button variant={`disabled`} className={`w-fit h-fit flex flex-col rounded-full hover-none bg-purple-200`}>
                 <Landmark className='h-10 w-10'  />
                 <p>Government</p>
-              </Button>
+              </Button> */}
               <Button
                 variant={currentView === 'infra_updates' ? 'default' : 'ghost'}
                 size="sm"

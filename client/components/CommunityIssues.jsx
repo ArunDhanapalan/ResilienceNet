@@ -88,7 +88,7 @@ const CommunityIssues = ({ issues, loading, user, onIssueClick }) => {
     }
 
     return (
-      <ScrollArea className="h-[300px] md:h-[calc(50vh-8rem)]">
+      <ScrollArea className="h-screen">
         <div className="space-y-3 pr-4">
           {communityIssues.map((issue) => (
             <Card
@@ -129,7 +129,7 @@ const CommunityIssues = ({ issues, loading, user, onIssueClick }) => {
 
   return (
     <>
-      <Card className="h-full">
+      <Card className="h-fit">
         <CardHeader>
           <CardTitle>Community Issues</CardTitle>
         </CardHeader>
@@ -184,7 +184,7 @@ const CommunityIssues = ({ issues, loading, user, onIssueClick }) => {
                   </span>
                 </p>
                 <p className="text-sm font-medium text-gray-700">
-                  Area: <span className="font-normal ml-1">N/A (data not provided)</span>
+                  Area: <span className="font-normal ml-1">{selectedIssue?.area}</span>
                 </p>
               </div>
             </div>

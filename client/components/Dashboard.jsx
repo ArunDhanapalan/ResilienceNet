@@ -96,7 +96,7 @@ const Dashboard = ({ user }) => {
   const renderDashboardCards = () => {
     if (user?.role === "govt") {
       return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-3 md:grid-cols-5 gap-4 mb-6">
           <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">

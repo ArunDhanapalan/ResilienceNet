@@ -19,9 +19,9 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage });
 
 // CREATE INFRASTRUCTURE PROJECT
+// This route needs the multer middleware
 router.post('/create', authMiddleware, upload.array('images', 10), async (req, res) => {
     try {
-
         const { name, type, description, lat, lng, area, budget, estimatedCompletion, contractor, progress, notes } = req.body;
         const images = req.files ? req.files.map(file => file.path) : [];
 
@@ -74,14 +74,10 @@ router.get('/:id', async (req, res) => {
 });
 
 // UPDATE INFRASTRUCTURE PROJECT
-router.put('/:id', authMiddleware, upload.array('images', 10), async (req, res) => {
+// This route does not need the multer middleware for text-only updates.
+router.put('/:id', authMiddleware, async (req, res) => {
     try {
-        if (req.user.role !== 'govt') {
-            return res.status(403).json({ error: 'Access denied. Government role required.' });
-        }
-
         const { name, type, description, lat, lng, area, budget, estimatedCompletion, contractor, progress, notes, status } = req.body;
-        const newImages = req.files ? req.files.map(file => file.path) : [];
 
         const updateData = {};
         if (name) updateData.name = name;
@@ -95,12 +91,12 @@ router.put('/:id', authMiddleware, upload.array('images', 10), async (req, res) 
         if (progress) updateData.progress = parseInt(progress);
         if (notes) updateData.notes = notes;
         if (status) updateData.status = status;
-        if (newImages.length > 0) updateData.images = newImages;
 
         const project = await Infrastructure.findByIdAndUpdate(req.params.id, updateData, { new: true });
         if (!project) return res.status(404).json({ error: 'Infrastructure project not found' });
         res.json(project);
     } catch (err) {
+        console.error('Update error:', err);
         res.status(500).json({ error: 'Server error updating infrastructure project' });
     }
 });
@@ -108,10 +104,6 @@ router.put('/:id', authMiddleware, upload.array('images', 10), async (req, res) 
 // DELETE INFRASTRUCTURE PROJECT
 router.delete('/:id', authMiddleware, async (req, res) => {
     try {
-        if (req.user.role !== 'govt') {
-            return res.status(403).json({ error: 'Access denied. Government role required.' });
-        }
-
         const project = await Infrastructure.findByIdAndDelete(req.params.id);
         if (!project) return res.status(404).json({ error: 'Infrastructure project not found' });
         res.json({ message: 'Infrastructure project deleted successfully' });

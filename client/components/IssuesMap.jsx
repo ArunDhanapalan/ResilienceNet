@@ -33,7 +33,7 @@ const IssuesMap = ({ issues, onIssueClick }) => {
           center={mapCenter} 
           zoom={13} 
           scrollWheelZoom={true} 
-          className="h-[500px] md:h-[calc(70vh-8rem)] w-full rounded-md z-0"
+          className="h-[500px] w-full rounded-md z-0"
         >
           <TileLayer
             attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
