@@ -127,7 +127,7 @@ const GovernmentDashboard = ({ user }) => {
                 <CardTitle>{issue.title}</CardTitle>
                 <CardDescription>Category: {issue.category}</CardDescription>
                 <CardDescription>
-                  Reporter: {issue.reporter?.username}
+                  Area: {issue?.area}
                 </CardDescription>
                 <Badge variant="default">{issue.status}</Badge>
 
@@ -207,6 +207,12 @@ const GovernmentDashboard = ({ user }) => {
                   Area:{" "}
                   <span className="font-normal ml-1">
                     {selectedIssue?.area}
+                  </span>
+                </p>
+                <p className="text-sm font-medium text-gray-700">
+                  Reporter:{" "}
+                  <span className="font-normal ml-1">
+                    {selectedIssue?.reporter?.username}
                   </span>
                 </p>
               </div>

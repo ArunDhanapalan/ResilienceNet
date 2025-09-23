@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import axios from '../utils/axiosConfig.js';
-import { toast } from 'react-hot-toast';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card.jsx';
-import { Badge } from './ui/badge.jsx';
-import { Button } from './ui/button.jsx';
-import { Skeleton } from './ui/skeleton.jsx';
+import React, { useState, useEffect } from "react";
+import axios from "../utils/axiosConfig.js";
+import { toast } from "react-hot-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card.jsx";
+import { Badge } from "./ui/badge.jsx";
+import { Button } from "./ui/button.jsx";
+import { Skeleton } from "./ui/skeleton.jsx";
 import {
   Building2,
   Calendar,
@@ -18,17 +18,23 @@ import {
   Pencil,
   Save,
   X,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from './ui/dialog.jsx';
-import { Input } from './ui/input.jsx';
-import { Label } from './ui/label.jsx';
-import { Textarea } from './ui/textarea.jsx';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select.jsx';
+} from "./ui/dialog.jsx";
+import { Input } from "./ui/input.jsx";
+import { Label } from "./ui/label.jsx";
+import { Textarea } from "./ui/textarea.jsx";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select.jsx";
 
 const InfrastructureUpdates = ({ user }) => {
   const [projects, setProjects] = useState([]);
@@ -45,10 +51,10 @@ const InfrastructureUpdates = ({ user }) => {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('/infrastructure');
+      const res = await axios.get("/infrastructure");
       setProjects(res.data);
     } catch (err) {
-      toast.error('Failed to fetch infrastructure projects');
+      toast.error("Failed to fetch alerts/updates");
       console.error(err);
     } finally {
       setLoading(false);
@@ -57,13 +63,13 @@ const InfrastructureUpdates = ({ user }) => {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'Completed':
+      case "Completed":
         return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'Under Construction':
+      case "Under Construction":
         return <Clock className="h-4 w-4 text-blue-500" />;
-      case 'Maintenance Required':
+      case "Maintenance Required":
         return <AlertCircle className="h-4 w-4 text-orange-500" />;
-      case 'Out of Service':
+      case "Out of Service":
         return <AlertCircle className="h-4 w-4 text-red-500" />;
       default:
         return <Clock className="h-4 w-4 text-gray-500" />;
@@ -72,33 +78,33 @@ const InfrastructureUpdates = ({ user }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Completed':
-        return 'bg-green-100 text-green-800';
-      case 'Under Construction':
-        return 'bg-blue-100 text-blue-800';
-      case 'Maintenance Required':
-        return 'bg-orange-100 text-orange-800';
-      case 'Out of Service':
-        return 'bg-red-100 text-red-800';
+      case "Completed":
+        return "bg-green-100 text-green-800";
+      case "Under Construction":
+        return "bg-blue-100 text-blue-800";
+      case "Maintenance Required":
+        return "bg-orange-100 text-orange-800";
+      case "Out of Service":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'Not specified';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    if (!dateString) return "Not specified";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const formatCurrency = (amount) => {
-    if (!amount) return 'Not specified';
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
+    if (!amount) return "Not specified";
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
       maximumFractionDigits: 0,
     }).format(amount);
   };
@@ -113,11 +119,11 @@ const InfrastructureUpdates = ({ user }) => {
   const handleUpdateProject = async () => {
     try {
       await axios.put(`/infrastructure/${editedProject._id}`, editedProject);
-      toast.success('Project updated successfully!');
+      toast.success("Project updated successfully!");
       setSelectedProject(null);
       fetchProjects();
     } catch (err) {
-      toast.error('Failed to update project.');
+      toast.error("Failed to update project.");
       console.error(err);
     } finally {
       setIsEditing(false);
@@ -135,13 +141,19 @@ const InfrastructureUpdates = ({ user }) => {
 
   const nextImage = () => {
     if (selectedProject?.images) {
-      setCurrentImageIndex((prev) => (prev + 1) % selectedProject.images.length);
+      setCurrentImageIndex(
+        (prev) => (prev + 1) % selectedProject.images.length
+      );
     }
   };
 
   const prevImage = () => {
     if (selectedProject?.images) {
-      setCurrentImageIndex((prev) => (prev - 1 + selectedProject.images.length) % selectedProject.images.length);
+      setCurrentImageIndex(
+        (prev) =>
+          (prev - 1 + selectedProject.images.length) %
+          selectedProject.images.length
+      );
     }
   };
 
@@ -158,7 +170,7 @@ const InfrastructureUpdates = ({ user }) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Infrastructure Projects</h2>
+        <h2 className="text-2xl font-bold">Alerts</h2>
         <Button onClick={fetchProjects} variant="outline">
           Refresh
         </Button>
@@ -168,7 +180,7 @@ const InfrastructureUpdates = ({ user }) => {
         <Card>
           <CardContent className="text-center py-8">
             <Building2 className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500">No infrastructure projects found.</p>
+            <p className="text-gray-500">No alerts/updates found.</p>
           </CardContent>
         </Card>
       ) : (
@@ -248,7 +260,9 @@ const InfrastructureUpdates = ({ user }) => {
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {isEditing ? `Edit: ${selectedProject.name}` : selectedProject.name}
+                {isEditing
+                  ? `Edit: ${selectedProject.name}`
+                  : selectedProject.name}
               </DialogTitle>
             </DialogHeader>
 
@@ -285,7 +299,7 @@ const InfrastructureUpdates = ({ user }) => {
                     <Label htmlFor="name">Name</Label>
                     <Input
                       id="name"
-                      value={editedProject.name || ''}
+                      value={editedProject.name || ""}
                       onChange={handleEditChange}
                     />
                   </div>
@@ -293,7 +307,7 @@ const InfrastructureUpdates = ({ user }) => {
                     <Label htmlFor="description">Description</Label>
                     <Textarea
                       id="description"
-                      value={editedProject.description || ''}
+                      value={editedProject.description || ""}
                       onChange={handleEditChange}
                     />
                   </div>
@@ -301,7 +315,7 @@ const InfrastructureUpdates = ({ user }) => {
                     <Label htmlFor="area">Area</Label>
                     <Input
                       id="area"
-                      value={editedProject.area || ''}
+                      value={editedProject.area || ""}
                       onChange={handleEditChange}
                     />
                   </div>
@@ -310,7 +324,7 @@ const InfrastructureUpdates = ({ user }) => {
                     <Input
                       id="budget"
                       type="number"
-                      value={editedProject.budget || ''}
+                      value={editedProject.budget || ""}
                       onChange={handleEditChange}
                     />
                   </div>
@@ -328,17 +342,20 @@ const InfrastructureUpdates = ({ user }) => {
                   <div>
                     <Label htmlFor="status">Status</Label>
                     <Select
-                      value={editedProject.status || ''}
+                      value={editedProject.status || ""}
                       onValueChange={handleStatusChange}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select Status" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Under Construction">Under Construction</SelectItem>
+                        <SelectItem value="Planned">Planned</SelectItem>
+                        <SelectItem value="Under Construction">
+                          Being Implemented
+                        </SelectItem>
                         <SelectItem value="Completed">Completed</SelectItem>
-                        <SelectItem value="Maintenance Required">Maintenance Required</SelectItem>
-                        <SelectItem value="Out of Service">Out of Service</SelectItem>
+                        {/* <SelectItem value="Maintenance Required">Maintenance Required</SelectItem> */}
+                        <SelectItem value="Out of Service">Dropped</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -346,7 +363,7 @@ const InfrastructureUpdates = ({ user }) => {
                     <Label htmlFor="notes">Notes</Label>
                     <Textarea
                       id="notes"
-                      value={editedProject.notes || ''}
+                      value={editedProject.notes || ""}
                       onChange={handleEditChange}
                     />
                   </div>
@@ -398,11 +415,14 @@ const InfrastructureUpdates = ({ user }) => {
                 </>
               )}
             </div>
-            {user?.role === 'govt' && (
+            {user?.role === "govt" && (
               <div className="flex justify-end gap-2 mt-4">
                 {isEditing ? (
                   <>
-                    <Button onClick={() => setIsEditing(false)} variant="outline">
+                    <Button
+                      onClick={() => setIsEditing(false)}
+                      variant="outline"
+                    >
                       <X className="h-4 w-4 mr-2" /> Cancel
                     </Button>
                     <Button onClick={handleUpdateProject}>

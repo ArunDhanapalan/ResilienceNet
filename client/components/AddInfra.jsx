@@ -105,7 +105,7 @@ const AddInfra = ({ user }) => {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       
-      toast.success('Infrastructure project created successfully!');
+      toast.success('Critical Update created successfully!');
       
       // Reset form
       setFormData({
@@ -125,7 +125,7 @@ const AddInfra = ({ user }) => {
       setImages([]);
       setImagePreview([]);
     } catch (err) {
-      toast.error('Failed to create infrastructure project');
+      toast.error('Failed to create critical update!');
       console.error(err);
     } finally {
       setLoading(false);
@@ -139,7 +139,7 @@ const AddInfra = ({ user }) => {
 //           <CardContent className="text-center py-8">
 //             <MapPin className="h-12 w-12 mx-auto text-gray-400 mb-4" />
 //             <h2 className="text-xl font-semibold text-gray-700 mb-2">Access Denied</h2>
-//             <p className="text-gray-500">Only government officials can add infrastructure projects.</p>
+//             <p className="text-gray-500">Only government officials can add infrastructure updates.</p>
 //           </CardContent>
 //         </Card>
 //       </div>
@@ -152,37 +152,37 @@ const AddInfra = ({ user }) => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <MapPin className="h-6 w-6" />
-            <span>Add Infrastructure Project</span>
+            <span>Add Critical Update/Alert</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="name">Project Name *</Label>
+                <Label htmlFor="name">Update Name *</Label>
                 <Input
                   id="name"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  placeholder="Enter project name"
+                  placeholder="Enter update name"
                 />
               </div>
               <div>
-                <Label htmlFor="type">Project Type *</Label>
+                <Label htmlFor="type">Update Type *</Label>
                 <Select value={formData.type} onValueChange={(value) => handleSelectChange('type', value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select project type" />
+                    <SelectValue placeholder="Select update type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Road">Road</SelectItem>
-                    <SelectItem value="Bridge">Bridge</SelectItem>
+                    <SelectItem value="Road">Road/Bridge</SelectItem>
+                    <SelectItem value="Transport">Transport</SelectItem>
                     <SelectItem value="Building">Building</SelectItem>
-                    <SelectItem value="Park">Park</SelectItem>
+                    {/* <SelectItem value="Park">Park</SelectItem> */}
                     <SelectItem value="Water System">Water System</SelectItem>
-                    <SelectItem value="Electricity Grid">Electricity Grid</SelectItem>
                     <SelectItem value="Sewage System">Sewage System</SelectItem>
+                    <SelectItem value="Electricity Grid">Electricity Grid</SelectItem>
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -198,7 +198,7 @@ const AddInfra = ({ user }) => {
                 onChange={handleChange}
                 required
                 rows={3}
-                placeholder="Describe the infrastructure project"
+                placeholder="Describe the ritical update"
               />
             </div>
 
@@ -258,14 +258,14 @@ const AddInfra = ({ user }) => {
               <Label htmlFor="status">Status *</Label>
               <Select value={formData.status} onValueChange={(value) => handleSelectChange('status', value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select project status" />
+                  <SelectValue placeholder="Select update status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Planned">Planned</SelectItem>
-                  <SelectItem value="Under Construction">Under Construction</SelectItem>
+                  <SelectItem value="Under Construction">Being Implemented</SelectItem>
                   <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Maintenance Required">Maintenance Required</SelectItem>
-                  <SelectItem value="Out of Service">Out of Service</SelectItem>
+                  {/* <SelectItem value="Maintenance Required">Maintenance Required</SelectItem> */}
+                  <SelectItem value="Out of Service">Dropped</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -296,13 +296,13 @@ const AddInfra = ({ user }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="contractor">Contractor</Label>
+                <Label htmlFor="contractor">Organisation</Label>
                 <Input
                   id="contractor"
                   name="contractor"
                   value={formData.contractor}
                   onChange={handleChange}
-                  placeholder="Enter contractor name"
+                  placeholder="Enter organisation name"
                 />
               </div>
               <div>
@@ -328,13 +328,13 @@ const AddInfra = ({ user }) => {
                 value={formData.notes}
                 onChange={handleChange}
                 rows={2}
-                placeholder="Additional notes about the project"
+                placeholder="Additional notes about the alert"
               />
             </div>
 
             {/* Image Upload */}
             <div>
-              <Label htmlFor="images">Project Images</Label>
+              <Label htmlFor="images">Update Images</Label>
               <div className="mt-2">
                 <input
                   type="file"
@@ -373,7 +373,7 @@ const AddInfra = ({ user }) => {
             </div>
 
             <Button type="submit" disabled={loading} className="w-full">
-              {loading ? 'Creating Project...' : 'Create Infrastructure Project'}
+              {loading ? 'Creating Update...' : 'Create Critical Update'}
             </Button>
           </form>
         </CardContent>

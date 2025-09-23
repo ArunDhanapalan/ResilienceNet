@@ -65,7 +65,7 @@ const Nav = ({ user, setView, currentView, logout }) => {
                 className="flex flex-col items-center space-y-1 h-16 w-16"
               >
                 <TrendingUp className="h-5 w-5" />
-                <span className="text-xs">Updates</span>
+                <span className="text-xs">Alerts</span>
               </Button>
               <Button
                 variant="ghost"
@@ -104,7 +104,7 @@ const Nav = ({ user, setView, currentView, logout }) => {
                 className="flex flex-col items-center space-y-1 p-x-2 h-16 w-16"
               >
                 <Building2 className="h-5 w-5" />
-                <span className="text-xs">Add Infra</span>
+                <span className="text-xs">Add Alert</span>
               </Button>
               {/* <Button variant={`disabled`} className={`w-fit h-fit flex flex-col rounded-full hover-none bg-purple-200`}>
                 <Landmark className='h-10 w-10'  />
@@ -117,7 +117,7 @@ const Nav = ({ user, setView, currentView, logout }) => {
                 className="flex flex-col items-center space-y-1 h-16 w-16"
               >
                 <TrendingUp className="h-5 w-5" />
-                <span className="text-xs m-x-2">Infra Status</span>
+                <span className="text-xs m-x-2">Alert Status</span>
               </Button>
               <Button
                 variant="ghost"

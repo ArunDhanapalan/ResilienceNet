@@ -19,54 +19,71 @@ const Login = ({ setUser }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
+  const [org, setOrg] = useState(""); // State for organization/department
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-
     try {
-      const endpoint = isLogin ? "/auth/login" : "/auth/register";
-      const payload = { email, password, role };
-      if (!isLogin) payload.username = username;
-
+      const payload = { username, email, password, role };
+      if (role === 'govt') {
+        payload.org = org;
+      }
+      
       const res = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}${endpoint}`,
+        `${import.meta.env.VITE_BACKEND_URL}/auth/register`,
         payload
       );
+      
+      toast.success(res.data.message);
+      setIsLogin(true); // Switch to login view after successful registration
+    } catch (err) {
+      console.error("Registration error:", err);
+      if (err.response && err.response.status === 409) {
+        toast.error("An account with this email or username already exists.");
+      } else {
+        toast.error(
+          err.response?.data?.error || err.message || "Unexpected registration error"
+        );
+      }
+    }
+  };
 
-      console.log(res);
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = { email, password };
+      const res = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/auth/login`,
+        payload
+      );
 
       const token = res.data.token;
       localStorage.setItem("token", token);
 
-      // Hydrate user manually from response
       const userData = {
         _id: res.data.user.id,
         email: res.data.user.email,
-        username: res.data.user.username || username,
+        username: res.data.user.username,
         role: res.data.user.role,
       };
 
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
 
-      toast.success(
-        isLogin ? "Logged in successfully!" : "Registered successfully!"
-      );
-
-      // No need to navigate, the Dashboard component will handle the view based on user role
-      toast.loading("Logging in...", {duration: 1200})
-      console.log(res);
-    } catch (err) {
-      console.error("Login/Register error:", err);
-      // More specific error handling
-      if (err.response && err.response.status === 409) {
-        toast.error("An account with this email or username already exists.");
+      toast.success("Logged in successfully!");
+      
+      // Navigate based on role
+      if (userData.role === 'govt') {
+        navigate("/govt-dashboard");
       } else {
-        toast.error(
-          err.response?.data?.error || err.message || "Unexpected error"
-        );
+        navigate("/dashboard");
       }
+    } catch (err) {
+      console.error("Login error:", err);
+      toast.error(
+        err.response?.data?.error || err.message || "Invalid credentials"
+      );
     }
   };
 
@@ -74,13 +91,12 @@ const Login = ({ setUser }) => {
     <div className="flex md:flex-row flex-col min-h-screen w-full bg-gradient-to-br from-orange-500 to-amber-700">
       {/* Left Panel */}
       <div className="flex flex-col flex-1 justify-center items-center p-12 text-white">
-        <p className="text-6xl mb-5 text-center">🛣️</p>
+        <p className="text-6xl mb-5 text-center">🛡️</p>
         <h1 className="text-4xl md:text-5xl font-bold text-center mb-4">
           ResilienceNet
         </h1>
         <p className="text-lg text-center text-amber-50">
-          Report, track, and monitor civic and government infrastructure issues
-          with transparency and accountability.
+          Centralize communication and coordination during natural disasters
         </p>
       </div>
 
@@ -101,18 +117,33 @@ const Login = ({ setUser }) => {
               </TabsList>
             </Tabs>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
               {!isLogin && (
-                <div>
-                  <Label htmlFor="username">Username</Label>
-                  <Input
-                    id="username"
-                    placeholder="Enter your username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                  />
-                </div>
+                <>
+                  <div>
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                      id="username"
+                      placeholder="Enter your username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      required
+                    />
+                  </div>
+                  {/* Conditionally render org field for govt users */}
+                  {role === 'govt' && (
+                    <div>
+                      <Label htmlFor="org">Organization/Department</Label>
+                      <Input
+                        id="org"
+                        placeholder="Enter your organization"
+                        value={org}
+                        onChange={(e) => setOrg(e.target.value)}
+                        required
+                      />
+                    </div>
+                  )}
+                </>
               )}
 
               <div>
