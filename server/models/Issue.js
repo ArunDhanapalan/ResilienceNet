@@ -8,6 +8,7 @@ const issueSchema = new mongoose.Schema(
       lat: { type: Number, required: true },
       lng: { type: Number, required: true },
     },
+
     images: [{
       type: String,
       required: false,

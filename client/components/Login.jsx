@@ -28,7 +28,7 @@ const Login = ({ setUser }) => {
       const endpoint = isLogin ? "/auth/login" : "/auth/register";
       const payload = { email, password, role };
       if (!isLogin) payload.username = username;
-
+      console.log(import.meta.env.VITE_BACKEND_URL)
       const res = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}${endpoint}`,
         payload

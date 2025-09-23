@@ -1,5 +1,6 @@
-// client/components/CommunityIssues.jsx
-import { useEffect, useState } from "react";
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
 import {
   Card,
   CardHeader,
@@ -18,22 +19,119 @@ import {
   DialogDescription,
 } from "../components/ui/dialog";
 
+import { Button } from "../components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "../components/ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
+
+// ShadCN ComboBox for area filter
+const AreaFilter = ({ areasWithCount, selectedArea, onChange, totalCount }) => {
+  const [open, setOpen] = useState(false);
+
+  const options = [
+    { label: `All Areas (${totalCount})`, value: "" },
+    ...areasWithCount.map(({ area, count }) => ({
+      label: `${area} (${count})`,
+      value: area,
+    })),
+  ];
+
+  const selectedLabel =
+    options.find((opt) => opt.value === selectedArea)?.label || "Select area";
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full md:w-64 justify-between mb-4"
+        >
+          {selectedLabel}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-full md:w-64 p-0">
+        <Command>
+          <CommandInput placeholder="Search area..." />
+          <CommandList>
+            <CommandEmpty>No area found.</CommandEmpty>
+            <CommandGroup>
+              {options.map((opt) => (
+                <CommandItem
+                  key={opt.value}
+                  value={opt.label}
+                  onSelect={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={
+                      selectedArea === opt.value
+                        ? "mr-2 h-4 w-4 opacity-100"
+                        : "mr-2 h-4 w-4 opacity-0"
+                    }
+                  />
+                  {opt.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 const CommunityIssues = ({ issues, loading, user, onIssueClick }) => {
   const [communityIssues, setCommunityIssues] = useState([]);
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [selectedArea, setSelectedArea] = useState("");
 
   useEffect(() => {
-    if (issues && user) {
-      const filteredIssues = issues.filter(
-        (issue) => issue.reporter?._id !== user._id
-      );
+    if (issues) {
+      // Filter out issues reported by the current user if the user object is available
+      const filteredIssues = user
+        ? issues.filter((issue) => issue.reporter?._id !== user._id)
+        : issues;
       setCommunityIssues(filteredIssues);
     } else {
-      setCommunityIssues(issues || []);
+      setCommunityIssues([]);
     }
   }, [issues, user]);
+
+
+  const areasWithCount = useMemo(() => {
+    const counts = {};
+    communityIssues.forEach((i) => {
+      if (i.area) {
+        counts[i.area] = (counts[i.area] || 0) + 1;
+      }
+    });
+    return Object.entries(counts).map(([area, count]) => ({ area, count }));
+  }, [communityIssues]);
+
+  const totalCount = communityIssues.length;
+
+  const filteredIssues = useMemo(() => {
+    if (!selectedArea) return communityIssues;
+    return communityIssues.filter((issue) => issue.area === selectedArea);
+  }, [communityIssues, selectedArea]);
 
   const getStatusBadgeVariant = (status) => {
     switch (status) {
@@ -79,7 +177,7 @@ const CommunityIssues = ({ issues, loading, user, onIssueClick }) => {
       );
     }
 
-    if (communityIssues.length === 0) {
+    if (filteredIssues.length === 0) {
       return (
         <div className="text-center text-gray-500 py-8">
           No community issues to display.
@@ -88,9 +186,11 @@ const CommunityIssues = ({ issues, loading, user, onIssueClick }) => {
     }
 
     return (
-      <ScrollArea className="h-screen">
+      // FIX: Changed h-screen to a more appropriate height like h-[70vh]
+      // 'h-screen' would make this component overflow its parent card.
+      <ScrollArea className="h-[70vh]">
         <div className="space-y-3 pr-4">
-          {communityIssues.map((issue) => (
+          {filteredIssues.map((issue) => (
             <Card
               key={issue._id}
               onClick={() => openDialog(issue)}
@@ -107,6 +207,9 @@ const CommunityIssues = ({ issues, loading, user, onIssueClick }) => {
                       {issue.status}
                     </Badge>
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Area: {issue.area || "Unknown"}
+                  </p>
                 </div>
                 {issue.images && issue.images.length > 0 && (
                   <div className="h-20 w-20 flex-shrink-0">
@@ -133,7 +236,17 @@ const CommunityIssues = ({ issues, loading, user, onIssueClick }) => {
         <CardHeader>
           <CardTitle>Community Issues</CardTitle>
         </CardHeader>
-        <CardContent>{renderCommunityIssues()}</CardContent>
+        <CardContent>
+          {areasWithCount.length > 0 && (
+            <AreaFilter
+              areasWithCount={areasWithCount}
+              selectedArea={selectedArea}
+              onChange={setSelectedArea}
+              totalCount={totalCount}
+            />
+          )}
+          {renderCommunityIssues()}
+        </CardContent>
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -179,12 +292,15 @@ const CommunityIssues = ({ issues, loading, user, onIssueClick }) => {
                 <p className="text-sm font-medium text-gray-700">
                   Coordinates:
                   <span className="font-normal ml-1">
-                    Lat: {selectedIssue?.location?.lat.toFixed(4)}, Lng:{" "}
-                    {selectedIssue?.location?.lng.toFixed(4)}
+                    {/* FIX: Added optional chaining to prevent crash if location is undefined */}
+                    {/* Used nullish coalescing (??) to provide a fallback value */}
+                    Lat: {selectedIssue?.location?.lat?.toFixed(4) ?? "N/A"}, Lng:{" "}
+                    {selectedIssue?.location?.lng?.toFixed(4) ?? "N/A"}
                   </span>
                 </p>
                 <p className="text-sm font-medium text-gray-700">
-                  Area: <span className="font-normal ml-1">{selectedIssue?.area}</span>
+                  Area:{" "}
+                  <span className="font-normal ml-1">{selectedIssue?.area}</span>
                 </p>
               </div>
             </div>

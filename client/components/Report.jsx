@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import axios from "../utils/axiosConfig.js";
-import { categorizeImages, getCategorySuggestions } from "../utils/imageCategorization.js";
+import { getCategorySuggestions } from "../utils/imageCategorization.js";
 
 import {
   Select,
@@ -27,8 +27,8 @@ const Report = ({ getIssues, setView }) => {
   const [images, setImages] = useState([]);
   const [location, setLocation] = useState(chennaiCoords);
   const [area, setArea] = useState("");
-  const [category, setCategory] = useState("Other"); // New state for category
-  const [priority, setPriority] = useState("Medium"); // New state for priority
+  const [category, setCategory] = useState("Other");
+  const [priority, setPriority] = useState("Medium");
   const [loading, setLoading] = useState(false);
   const [areaLoading, setAreaLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState([]);
@@ -87,7 +87,6 @@ const Report = ({ getIssues, setView }) => {
     getAreaFromCoords(location.lat, location.lng);
   }, [location]);
 
-  // Auto-suggest category based on description
   useEffect(() => {
     if (description.trim()) {
       const suggestions = getCategorySuggestions(description);
@@ -97,40 +96,58 @@ const Report = ({ getIssues, setView }) => {
     }
   }, [description]);
 
+  const categorizeImageWithAPI = async (imageFile) => {
+    setCategorizing(true);
+    try {
+      const response = await axios.post(
+        "https://adhithya200503.app.n8n.cloud/webhook/266a7033-cb27-4cd2-8ea5-1984f0a89236",
+        imageFile,
+        {
+          headers: {
+            "Content-Type": imageFile.type,
+          },
+        }
+      );
+
+      const result = response.data?.content?.parts?.[0]?.text;
+      if (result && result.type && result.score) {
+        const { type, score } = result;
+        if (score > 0.5) {
+          setCategory(type);
+          toast.success(`AI suggested category: ${type} (${Math.round(score * 100)}% confidence)`);
+        }
+      } else {
+        toast.error("AI categorization response was in an unexpected format.");
+      }
+    } catch (error) {
+      console.error("Error categorizing image with API:", error);
+      toast.error("AI categorization failed.");
+    } finally {
+      setCategorizing(false);
+    }
+  };
+
   const handleImageChange = async (e) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
       setImages(files);
       
-      // Create preview URLs
       const previews = files.map(file => URL.createObjectURL(file));
       setImagePreview(previews);
       
-      // Auto-categorize images if there are any
       if (files.length > 0) {
-        setCategorizing(true);
-        try {
-          const result = await categorizeImages(files);
-          if (result.confidence > 0.5) {
-            setCategory(result.category);
-            toast.success(`Auto-categorized as: ${result.category} (${Math.round(result.confidence * 100)}% confidence)`);
-          }
-        } catch (error) {
-          console.error('Error categorizing images:', error);
-        } finally {
-          setCategorizing(false);
-        }
+        await categorizeImageWithAPI(files[0]);
       }
     }
   };
-
+  
   const removeImage = (index) => {
     const newImages = images.filter((_, i) => i !== index);
     const newPreviews = imagePreview.filter((_, i) => i !== index);
     setImages(newImages);
     setImagePreview(newPreviews);
   };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -157,6 +174,7 @@ const Report = ({ getIssues, setView }) => {
       toast.error(err.response?.data?.error || "Failed to report issue");
     } finally {
       setLoading(false);
+      
     }
   };
 
@@ -184,7 +202,7 @@ const Report = ({ getIssues, setView }) => {
         rows={4}
         className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 transition duration-200"
       />
-      {/* Category selection dropdown */}
+      
       <div className="space-y-2">
         <Select value={category} onValueChange={setCategory}>
           <SelectTrigger className="w-full">
@@ -200,7 +218,6 @@ const Report = ({ getIssues, setView }) => {
           </SelectContent>
         </Select>
         
-        {/* Category suggestions based on description */}
         {categorySuggestions.length > 0 && (
           <div className="space-y-1">
             <p className="text-sm text-gray-600">Suggested categories based on your description:</p>
@@ -219,7 +236,6 @@ const Report = ({ getIssues, setView }) => {
           </div>
         )}
         
-        {/* AI categorization status */}
         {categorizing && (
           <div className="flex items-center space-x-2 text-sm text-blue-600">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
@@ -228,7 +244,6 @@ const Report = ({ getIssues, setView }) => {
         )}
       </div>
 
-      {/* Priority selection dropdown */}
       <Select value={priority} onValueChange={setPriority}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Select priority level" />
@@ -248,7 +263,6 @@ const Report = ({ getIssues, setView }) => {
         className="w-full text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
       />
       
-      {/* Image Preview */}
       {imagePreview.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-gray-700">Image Previews:</h4>
