@@ -8,16 +8,16 @@ const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 // Register
 router.post("/register", async (req, res) => {
   try {
-    const { username, email, password, role, org } = req.body; // Added org
+    const { username, email, password, role } = req.body; // Added org
     if (!username || !email || !password || !role)
       return res.status(400).json({ error: "All fields are required" });
 
     // Server-side validation for 'org' field
-    if (role === "govt" && !org) {
-      return res
-        .status(400)
-        .json({ error: "Organization is required for government accounts." });
-    }
+    // if (role === "govt" && !org) {
+    //   return res
+    //     .status(400)
+    //     .json({ error: "Organization is required for government accounts." });
+    // }
 
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser)
@@ -25,7 +25,7 @@ router.post("/register", async (req, res) => {
         .status(409)
         .json({ error: "Email or username already exists" });
 
-    const user = new User({ username, email, password, role, org }); // Pass org to model
+    const user = new User({ username, email, password, role }); // Pass org to model
     await user.save();
 
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, {
@@ -40,7 +40,7 @@ router.post("/register", async (req, res) => {
         email: user.email,
         username: user.username,
         role: user.role,
-        org: user.org,
+        // org: user.org,
       },
     });
   } catch (err) {
@@ -69,7 +69,6 @@ router.post("/login", async (req, res) => {
         email: user.email,
         username: user.username,
         role: user.role,
-        org: user.org,
       },
     });
   } catch (err) {

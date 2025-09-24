@@ -134,3 +134,27 @@ body {
     overflow: hidden;
   }
 }
+
+/* Add this to your globals.css file */
+
+:root {
+  /* ... your other variables like --background, --foreground, etc. */
+
+  /* Chart Colors */
+  --chart-1: 220 80% 60%;
+  --chart-2: 160 70% 50%;
+  --chart-3: 40 80% 60%;
+  --chart-4: 280 80% 60%;
+  --chart-5: 340 80% 60%;
+}
+
+.dark {
+  /* ... your other dark theme variables */
+
+  /* Chart Colors for Dark Mode (optional) */
+  --chart-1: 220 70% 70%;
+  --chart-2: 160 60% 60%;
+  --chart-3: 40 70% 70%;
+  --chart-4: 280 70% 70%;
+  --chart-5: 340 70% 70%;
+}

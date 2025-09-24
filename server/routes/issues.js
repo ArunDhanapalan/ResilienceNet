@@ -4,6 +4,7 @@ const { cloudinary } = require('../utils/cloudinary');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 const authMiddleware = require('../middleware/authMiddleware');
+const { default: axios } = require('axios');
 
 const router = express.Router();
 
@@ -120,5 +121,68 @@ router.get('/status/:status', async (req, res) => {
         res.status(500).json({ error: 'Server error fetching issues by status' });
     }
 });
+
+
+// const Issue = require("../models/Issue"); // adjust path if needed
+const User = require("../models/User")
+
+
+router.post("/verify-issue", async (req, res) => {
+  try {
+    const { before, after, issueId } = req.body;
+
+    if (!before || !after || !issueId) {
+      return res.status(400).json({ error: "Missing required fields." });
+    }
+
+    // Step 1: Call the verification webhook
+    const { data: verificationData } = await axios.post(
+      "https://adhithya200503.app.n8n.cloud/webhook/8a9f57f9-cbcd-4881-968e-c67068134f1d",
+      { before, after }
+    );
+
+    // Step 2: If verification is resolved → fetch issue and reporter, send email
+    if (verificationData.resolved) {
+      const issue = await Issue.findById(issueId);
+      if (!issue) {
+        return res.status(404).json({ error: "Issue not found." });
+      }
+
+      const reporter = await User.findById(issue.reporter).select("email username");
+
+      const emailPayload = {
+        issueId: issue._id,
+        title: issue.title,
+        description: issue.description,
+        reporterEmail: reporter?.email,
+        reporterUsername: reporter?.username,
+        status: "Resolved",
+        beforeImage: before,
+        afterImage: after,
+      };
+
+      const { data: emailResponse } = await axios.post(
+        "https://adhithya200503.app.n8n.cloud/webhook/cd0bb85d-5eca-4fd0-8fa5-5c1f6b85d2d0",
+        emailPayload
+      );
+
+      // Optional: update issue status in DB
+      issue.status = "Resolved";
+      await issue.save();
+
+      return res.json({
+        verification: verificationData,
+        email: emailResponse,
+      });
+    }
+
+    // If verification failed, just return the verification data
+    res.json({ verification: verificationData });
+  } catch (err) {
+    console.error("Verification/email failed:", err);
+    res.status(500).json({ error: "Verification/email failed." });
+  }
+});
+
 
 module.exports = router;

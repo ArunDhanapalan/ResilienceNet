@@ -255,47 +255,82 @@ const GovernmentDashboard = ({ user }) => {
   };
 
   const uploadImage = async (file) => {
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    return "https://res.cloudinary.com/datvfcnme/image/upload/v1758651526/image2_zkgra3.jpg";
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      console.log("Uploading file:", file);
+      
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/infrastructure/upload`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      return data.url;
+    } catch (err) {
+      console.error("Image upload failed:", err);
+      toast.error("Image upload failed!");
+      throw err;
+    }
   };
 
   const handleVerifyAndResolve = async () => {
-    if (!afterImageFile || !resolvingIssue) {
-      toast.error("Please select an 'after' image.");
-      return;
-    }
-    if (!resolvingIssue.images?.length) {
-      toast.error("This issue has no 'before' image.");
-      return;
-    }
+  if (!afterImageFile || !resolvingIssue) {
+    toast.error("Please select an 'after' image.");
+    return;
+  }
 
-    setIsVerifying(true);
-    try {
-      const afterImageUrl = await uploadImage(afterImageFile);
-      const beforeImageUrl = resolvingIssue.images[0];
+  if (!resolvingIssue.images?.length) {
+    toast.error("This issue has no 'before' image.");
+    return;
+  }
 
-      const verificationUrl =
-        "https://adhithya200503.app.n8n.cloud/webhook/8a9f57f9-cbcd-4881-968e-c67068134f1d";
+  setIsVerifying(true);
 
-      const { data } = await axios.post(verificationUrl, {
+  try {
+    // 1️⃣ Upload the after image to Cloudinary
+    const afterImageUrl = await uploadImage(afterImageFile);
+
+    // 2️⃣ Use the first image as the 'before' image
+    const beforeImageUrl = resolvingIssue.images[0];
+
+    // 3️⃣ Call backend route that does verification + email
+    const { data } = await axios.post(
+      `${import.meta.env.VITE_BACKEND_URL}/issues/verify-issue`,
+      {
         before: beforeImageUrl,
         after: afterImageUrl,
-      });
-
-      if (data.resolved) {
-        await handleUpdateStatus(resolvingIssue._id, "Resolved");
-        setIsResolveDialogOpen(false);
-        setAfterImageFile(null);
-        setResolvingIssue(null);
-      } else {
-        toast.error(`Verification Failed: ${data.reason}`, { duration: 7000 });
+        issueId: resolvingIssue._id,
       }
-    } catch {
-      toast.error("Verification error occurred.");
-    } finally {
-      setIsVerifying(false);
+    );
+
+    // 4️⃣ Handle the response
+    if (data.verification?.resolved) {
+      toast.success("Issue verified and email sent successfully!");
+
+      // Update frontend state
+      await handleUpdateStatus(resolvingIssue._id, "Resolved");
+      setIsResolveDialogOpen(false);
+      setAfterImageFile(null);
+      setResolvingIssue(null);
+    } else {
+      toast.error(
+        `Verification Failed${data.verification?.reason ? ": " + data.verification.reason : ""}`,
+        { duration: 7000 }
+      );
     }
-  };
+  } catch (err) {
+    console.error("Verification/email error:", err);
+    toast.error("Verification/email error occurred.");
+  } finally {
+    setIsVerifying(false);
+  }
+};
+
 
   const openDialog = (issue) => {
     setSelectedIssue(issue);
@@ -316,7 +351,7 @@ const GovernmentDashboard = ({ user }) => {
       i.title,
       i.area,
       i.category,
-      i.reporter?.username,
+      i.reporter?.username || "Unreported",
       i.status,
     ]);
     const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
@@ -388,9 +423,9 @@ const GovernmentDashboard = ({ user }) => {
                 <CardTitle>{issue.title}</CardTitle>
                 <CardDescription>Area: {issue.area}</CardDescription>
                 <CardDescription>Category: {issue.category}</CardDescription>
-                {/* <CardDescription>
-                  Reporter: {issue.reporter?.username}
-                </CardDescription> */}
+                <CardDescription>
+                  Reporter: {issue.reporter?.username || "Unreported"}
+                </CardDescription>
                 <Badge variant="default">{issue.status}</Badge>
               </div>
 
@@ -468,13 +503,18 @@ const GovernmentDashboard = ({ user }) => {
                 Area: <span className="font-normal">{selectedIssue?.area}</span>
               </p>
               <p className="text-sm font-medium text-gray-700">
-                Reporter: <span className="font-normal">{selectedIssue?.reporter?.username}</span>
+                Reporter:{" "}
+                <span className="font-normal">
+                  {selectedIssue?.reporter?.username || "Unreported"}
+                </span>
               </p>
               <p className="text-sm font-medium text-gray-700">
-                Created at: <span className="font-normal">{selectedIssue?.createdAt}</span>
+                Created at:{" "}
+                <span className="font-normal">{selectedIssue?.createdAt}</span>
               </p>
               <p className="text-sm font-medium text-gray-700">
-                Updated at: <span className="font-normal">{selectedIssue?.updatedAt}</span>
+                Updated at:{" "}
+                <span className="font-normal">{selectedIssue?.updatedAt}</span>
               </p>
             </div>
           </div>

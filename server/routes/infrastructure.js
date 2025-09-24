@@ -112,4 +112,26 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     }
 });
 
+// SINGLE IMAGE UPLOAD
+router.post(
+    "/upload",
+    upload.single("image"), // expecting `image` field
+    async (req, res) => {
+        try {
+            if (!req.file) {
+                return res.status(400).json({ error: "No image file uploaded." });
+            }
+
+            // Cloudinary URL from multer-storage-cloudinary
+            const imageUrl = req.file.path;
+
+            res.status(200).json({ url: imageUrl });
+        } catch (err) {
+            console.error("Image upload error:", err);
+            res.status(500).json({ error: "Server error while uploading image" });
+        }
+    }
+);
+
+
 module.exports = router;

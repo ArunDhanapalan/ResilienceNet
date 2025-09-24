@@ -8,7 +8,7 @@ const infrastructureSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["Road", "Bridge", "Building", "Park", "Water System", "Electricity Grid", "Sewage System", "Other"],
+      enum: ["Road", "Bridge", "Building", "Transport", "Park", "Water System", "Electricity Grid", "Sewage System", "Other"],
       required: true
     },
     description: { 

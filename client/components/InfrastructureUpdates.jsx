@@ -160,9 +160,9 @@ const InfrastructureUpdates = ({ user }) => {
   if (loading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-[200px] w-full rounded-lg" />
-        <Skeleton className="h-[200px] w-full rounded-lg" />
-        <Skeleton className="h-[200px] w-full rounded-lg" />
+        <Skeleton className="h-[200px] w-full bg-gray-200 rounded-lg" />
+        <Skeleton className="h-[200px] w-full bg-gray-200 rounded-lg" />
+        <Skeleton className="h-[200px] w-full bg-gray-200 rounded-lg" />
       </div>
     );
   }
