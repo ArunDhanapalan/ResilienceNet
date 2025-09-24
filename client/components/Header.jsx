@@ -5,7 +5,7 @@ const Header = ({ user}) => {
       {/* Left section: Logo and App Name */}
       <div className="flex items-center space-x-2">
         <span className="text-xl">🛡️</span>
-        <span className="text-2xl font-bold text-amber-700">ResilienceNet</span>
+        <span className="text-2xl font-bold text-sky-700">ResilienceNet</span>
       </div>
 
       {/* Right section: User Info */}
@@ -13,7 +13,7 @@ const Header = ({ user}) => {
         <div className="text-right">
           <p className="text-md font-semibold">Hi, {user?.username || "User"}</p>
           <p className="text-sm text-gray-500">
-            {user?.role||"Please login"} - {`${user?.org ||""}`} {"| Chennai"}
+            {user?.role||"Please login"} {"| Chennai"}
           </p>
         </div>
       </div>

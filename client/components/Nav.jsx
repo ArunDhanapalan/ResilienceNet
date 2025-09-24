@@ -18,7 +18,7 @@ const Nav = ({ user, setView, currentView, logout }) => {
   return (
     <>
       {/* Universal Bottom Navigation - works for both mobile and desktop */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/60 backdrop-blur-lg border-t border-gray-200 z-50">
         <div className="flex items-center justify-around py-2">
           {user?.role !== 'govt' ? (
             <>

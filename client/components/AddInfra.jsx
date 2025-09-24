@@ -198,7 +198,7 @@ const AddInfra = ({ user }) => {
                 onChange={handleChange}
                 required
                 rows={3}
-                placeholder="Describe the ritical update"
+                placeholder="Describe the critical update"
               />
             </div>
 

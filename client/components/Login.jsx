@@ -88,7 +88,7 @@ const Login = ({ setUser }) => {
   };
 
   return (
-    <div className="flex md:flex-row flex-col min-h-screen w-full bg-gradient-to-br from-orange-500 to-amber-700">
+    <div className="flex md:flex-row flex-col min-h-screen w-full bg-gradient-to-br from-sky-600 to-purple-300">
       {/* Left Panel */}
       <div className="flex flex-col flex-1 justify-center items-center p-12 text-white">
         <p className="text-6xl mb-5 text-center">🛡️</p>

@@ -6,7 +6,7 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: ['citizen', 'govt'], default: 'citizen' }, // Added role field
-  org: { type: String, required: function() { return this.role === 'govt'; } } // Added org field, required only for govt
+  org: { type: String, required: true }
 });
 
 UserSchema.pre('save', async function (next) {

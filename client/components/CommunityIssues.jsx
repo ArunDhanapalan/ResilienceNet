@@ -1,5 +1,6 @@
-// client/components/CommunityIssues.jsx
-import { useEffect, useState } from "react";
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
 import {
   Card,
   CardHeader,
@@ -18,22 +19,198 @@ import {
   DialogDescription,
 } from "../components/ui/dialog";
 
+import { Button } from "../components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "../components/ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
+
+// ShadCN ComboBox for area filter
+const AreaFilter = ({ areasWithCount, selectedArea, onChange, totalCount }) => {
+  const [open, setOpen] = useState(false);
+
+  const options = [
+    { label: `All Areas (${totalCount})`, value: "" },
+    ...areasWithCount.map(({ area, count }) => ({
+      label: `${area} (${count})`,
+      value: area,
+    })),
+  ];
+
+  const selectedLabel =
+    options.find((opt) => opt.value === selectedArea)?.label || "Select area";
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full md:w-64 justify-between mb-4"
+        >
+          {selectedLabel}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-full md:w-64 p-0">
+        <Command>
+          <CommandInput placeholder="Search area..." />
+          <CommandList>
+            <CommandEmpty>No area found.</CommandEmpty>
+            <CommandGroup>
+              {options.map((opt) => (
+                <CommandItem
+                  key={opt.value}
+                  value={opt.label}
+                  onSelect={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={
+                      selectedArea === opt.value
+                        ? "mr-2 h-4 w-4 opacity-100"
+                        : "mr-2 h-4 w-4 opacity-0"
+                    }
+                  />
+                  {opt.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+// New ShadCN ComboBox for category filter
+const CategoryFilter = ({ categoriesWithCount, selectedCategory, onChange, totalCount }) => {
+    const [open, setOpen] = useState(false);
+  
+    const options = [
+      { label: `All Categories (${totalCount})`, value: "" },
+      ...categoriesWithCount.map(({ category, count }) => ({
+        label: `${category} (${count})`,
+        value: category,
+      })),
+    ];
+  
+    const selectedLabel =
+      options.find((opt) => opt.value === selectedCategory)?.label || "Select category";
+  
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full md:w-64 justify-between mb-4 md:ml-4"
+          >
+            {selectedLabel}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-full md:w-64 p-0">
+          <Command>
+            <CommandInput placeholder="Search category..." />
+            <CommandList>
+              <CommandEmpty>No category found.</CommandEmpty>
+              <CommandGroup>
+                {options.map((opt) => (
+                  <CommandItem
+                    key={opt.value}
+                    value={opt.label}
+                    onSelect={() => {
+                      onChange(opt.value);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={
+                        selectedCategory === opt.value
+                          ? "mr-2 h-4 w-4 opacity-100"
+                          : "mr-2 h-4 w-4 opacity-0"
+                      }
+                    />
+                    {opt.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      {/* </PopoverContent> */}
+    </Popover>
+    );
+};
+
 const CommunityIssues = ({ issues, loading, user, onIssueClick }) => {
   const [communityIssues, setCommunityIssues] = useState([]);
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [selectedArea, setSelectedArea] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(""); // New state for category filter
 
   useEffect(() => {
-    if (issues && user) {
-      const filteredIssues = issues.filter(
-        (issue) => issue.reporter?._id !== user._id
-      );
+    if (issues) {
+      const filteredIssues = user
+        ? issues.filter((issue) => issue.reporter?._id !== user._id)
+        : issues;
       setCommunityIssues(filteredIssues);
     } else {
-      setCommunityIssues(issues || []);
+      setCommunityIssues([]);
     }
   }, [issues, user]);
+
+  const areasWithCount = useMemo(() => {
+    const counts = {};
+    communityIssues.forEach((i) => {
+      if (i.area) {
+        counts[i.area] = (counts[i.area] || 0) + 1;
+      }
+    });
+    return Object.entries(counts).map(([area, count]) => ({ area, count }));
+  }, [communityIssues]);
+  
+  // New useMemo hook to get categories with their counts
+  const categoriesWithCount = useMemo(() => {
+    const counts = {};
+    communityIssues.forEach((i) => {
+      if (i.category) {
+        counts[i.category] = (counts[i.category] || 0) + 1;
+      }
+    });
+    return Object.entries(counts).map(([category, count]) => ({ category, count }));
+  }, [communityIssues]);
+
+  const totalCount = communityIssues.length;
+
+  const filteredIssues = useMemo(() => {
+    let result = communityIssues;
+    if (selectedArea) {
+      result = result.filter((issue) => issue.area === selectedArea);
+    }
+    // Add category filter
+    if (selectedCategory) {
+      result = result.filter((issue) => issue.category === selectedCategory);
+    }
+    return result;
+  }, [communityIssues, selectedArea, selectedCategory]);
 
   const getStatusBadgeVariant = (status) => {
     switch (status) {
@@ -79,7 +256,7 @@ const CommunityIssues = ({ issues, loading, user, onIssueClick }) => {
       );
     }
 
-    if (communityIssues.length === 0) {
+    if (filteredIssues.length === 0) {
       return (
         <div className="text-center text-gray-500 py-8">
           No community issues to display.
@@ -88,9 +265,9 @@ const CommunityIssues = ({ issues, loading, user, onIssueClick }) => {
     }
 
     return (
-      <ScrollArea className="h-screen">
+      <ScrollArea className="h-[70vh]">
         <div className="space-y-3 pr-4">
-          {communityIssues.map((issue) => (
+          {filteredIssues.map((issue) => (
             <Card
               key={issue._id}
               onClick={() => openDialog(issue)}
@@ -107,6 +284,12 @@ const CommunityIssues = ({ issues, loading, user, onIssueClick }) => {
                       {issue.status}
                     </Badge>
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Area: {issue.area || "Unknown"}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Category: {issue.category || "Unknown"}
+                  </p>
                 </div>
                 {issue.images && issue.images.length > 0 && (
                   <div className="h-20 w-20 flex-shrink-0">
@@ -133,7 +316,27 @@ const CommunityIssues = ({ issues, loading, user, onIssueClick }) => {
         <CardHeader>
           <CardTitle>Community Issues</CardTitle>
         </CardHeader>
-        <CardContent>{renderCommunityIssues()}</CardContent>
+        <CardContent>
+          <div className="flex flex-col md:flex-row space-y-4 md:space-y-0">
+            {areasWithCount.length > 0 && (
+              <AreaFilter
+                areasWithCount={areasWithCount}
+                selectedArea={selectedArea}
+                onChange={setSelectedArea}
+                totalCount={totalCount}
+              />
+            )}
+            {categoriesWithCount.length > 0 && (
+              <CategoryFilter
+                categoriesWithCount={categoriesWithCount}
+                selectedCategory={selectedCategory}
+                onChange={setSelectedCategory}
+                totalCount={totalCount}
+              />
+            )}
+          </div>
+          {renderCommunityIssues()}
+        </CardContent>
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -179,12 +382,13 @@ const CommunityIssues = ({ issues, loading, user, onIssueClick }) => {
                 <p className="text-sm font-medium text-gray-700">
                   Coordinates:
                   <span className="font-normal ml-1">
-                    Lat: {selectedIssue?.location?.lat.toFixed(4)}, Lng:{" "}
-                    {selectedIssue?.location?.lng.toFixed(4)}
+                    Lat: {selectedIssue?.location?.lat?.toFixed(4) ?? "N/A"}, Lng:{" "}
+                    {selectedIssue?.location?.lng?.toFixed(4) ?? "N/A"}
                   </span>
                 </p>
                 <p className="text-sm font-medium text-gray-700">
-                  Area: <span className="font-normal ml-1">{selectedIssue?.area}</span>
+                  Area:{" "}
+                  <span className="font-normal ml-1">{selectedIssue?.area}</span>
                 </p>
               </div>
             </div>

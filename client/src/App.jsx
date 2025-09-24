@@ -55,6 +55,7 @@ const App = () => {
       setLoading(false);
     }
   };
+  console.log(user);
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -122,7 +123,7 @@ const App = () => {
 
   return (
     <div className="flex flex-col w-full h-screen">
-      <main className="flex-1 w-full bg-orange-50">
+      <main className="flex-1 w-full bg-gray-100">
         <Header user={user} />
         {renderView()}
       </main>
