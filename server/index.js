@@ -13,6 +13,8 @@ const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
   'http://localhost:5173',       // Local dev frontend
   'https://civic-pulse-app.web.app', // Production Firebase
+  'https://localhost',
+  'http://localhost'
 ];
 
 app.use(cors({
